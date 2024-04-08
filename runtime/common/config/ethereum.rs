@@ -6,13 +6,14 @@ use frame_support::{
 };
 use pallet_ethereum::PostLogContent;
 use pallet_evm::{EVMCurrencyAdapter, EnsureAddressTruncated, HashedAddressMapping};
+use scale_info::prelude::string::{String, ToString};
 use sp_core::{H160, U256};
 use sp_runtime::{traits::ConstU32, Perbill, RuntimeAppPublic};
 use up_common::constants::*;
 
 use crate::{
 	runtime_common::{ethereum::precompiles::UniquePrecompiles, DealWithFees},
-	Aura, Balances, ChainId, Runtime, RuntimeEvent,
+	Aura, Balances, ChainId, Runtime, RuntimeEvent, DECIMALS, TOKEN_SYMBOL, VERSION,
 };
 
 pub type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Runtime>;
@@ -85,7 +86,10 @@ impl pallet_evm::Config for Runtime {
 	type PrecompilesValue = PrecompilesValue;
 	type Currency = Balances;
 	type RuntimeEvent = RuntimeEvent;
-	type OnMethodCall = (pallet_evm_contract_helpers::HelpersOnMethodCall<Self>,);
+	type OnMethodCall = (
+		pallet_balances_adapter::eth::AdapterOnMethodCall<Self>,
+		pallet_evm_contract_helpers::HelpersOnMethodCall<Self>,
+	);
 	type OnCreate = pallet_evm_contract_helpers::HelpersOnCreate<Self>;
 	type ChainId = ChainId;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
@@ -123,3 +127,21 @@ impl pallet_evm_contract_helpers::Config for Runtime {
 }
 
 impl pallet_evm_coder_substrate::Config for Runtime {}
+
+parameter_types! {
+	pub const Decimals: u8 = DECIMALS;
+	pub Name: String = String::from_utf8_lossy(VERSION.impl_name.as_ref()).to_string();
+	pub Symbol: String = TOKEN_SYMBOL.to_string();
+	pub const AdapterContractAddress: H160 = H160([
+		0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	]);
+}
+impl pallet_balances_adapter::Config for Runtime {
+	type Balances = Balances;
+	type NativeBalance = up_common::types::Balance;
+	type ContractAddress = AdapterContractAddress;
+	type Decimals = Decimals;
+	type Name = Name;
+	type Symbol = Symbol;
+	type WeightInfo = pallet_balances::weights::SubstrateWeight<Self>;
+}

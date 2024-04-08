@@ -38,7 +38,7 @@ mod runtime_common;
 pub use runtime_common::*;
 
 // FIXME
-pub const TOKEN_SYMBOL: &str = "RDF";
+pub const TOKEN_SYMBOL: &str = "OMN";
 pub const DECIMALS: u8 = 18;
 
 /// This runtime version.
@@ -57,7 +57,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 	pub const SS58Prefix: u16 = 42;
-    // FIXME
+	// FIXME
 	pub const ChainId: u64 = 2222;
 	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
 }
