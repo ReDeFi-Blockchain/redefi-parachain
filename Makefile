@@ -1,3 +1,7 @@
+.PHONY: _help
+_help:
+	@echo "Used to generate stubs for contract(s) defined in native (via evm-coder). See Makefile for details."
+
 NATIVE_FUNGIBLE_EVM_STUBS=./pallets/balances-adapter/src/stubs
 
 
