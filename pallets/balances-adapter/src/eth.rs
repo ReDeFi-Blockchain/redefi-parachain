@@ -45,7 +45,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 		let owner = T::CrossAccountId::from_eth(caller);
 		let spender = T::CrossAccountId::from_eth(spender);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		<Pallet<T>>::approve(&owner, &spender, amount, true);
+		<Pallet<T>>::approve(&owner, &spender, amount, true).map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 
