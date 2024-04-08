@@ -1,0 +1,38 @@
+[package]
+authors = ["Unique Network <support@uniquenetwork.io>"]
+description = "Unique data structs definitions"
+edition = "2021"
+homepage = "https://unique.network"
+license = 'GPLv3'
+name = "up-data-structs"
+repository = 'https://github.com/UniqueNetwork/unique-chain'
+version = "0.2.2"
+
+[dependencies]
+derivative = { workspace = true }
+evm-coder = { workspace = true }
+frame-support = { workspace = true }
+pallet-evm = { workspace = true }
+parity-scale-codec = { workspace = true }
+scale-info = { workspace = true }
+serde = { workspace = true }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
+
+[features]
+default = ["std"]
+limit-testing = []
+runtime-benchmarks = []
+serde1 = ["serde/alloc"]
+std = [
+	"frame-support/std",
+	"pallet-evm/std",
+	"parity-scale-codec/std",
+	"serde/std",
+	"serde1",
+	"sp-core/std",
+	"sp-runtime/std",
+	"sp-std/std",
+]
+stubgen = ["evm-coder/stubgen"]

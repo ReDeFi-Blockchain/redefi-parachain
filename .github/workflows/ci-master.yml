@@ -1,0 +1,71 @@
+# https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2587656193/CI+Master
+# Workflow which controls starts nested workflows.
+name: master
+
+# Triger: PR at 'master' branch with following types of events.
+on:
+  pull_request:
+    branches: [ 'master' ]
+    types: [ opened, reopened, synchronize, ready_for_review ]
+
+#Concurency group for control execution queue over github runners.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
+# List of a jobs included into Workflow.
+jobs:
+
+  yarn-dev:
+    uses: ./.github/workflows/yarn-dev.yml
+    secrets: inherit    
+
+  unit-test:
+    uses: ./.github/workflows/unit-test.yml
+    secrets: inherit    
+
+  # canary:
+  #   uses: ./.github/workflows/canary.yml
+  #   secrets: inherit # pass all secrets from initial workflow to nested
+
+  xcm:
+    uses: ./.github/workflows/xcm.yml
+    secrets: inherit # pass all secrets from initial workflow to nested
+
+  xnft:
+    uses: ./.github/workflows/xnft.yml
+    secrets: inherit # pass all secrets from initial workflow to nested
+    
+  collator-selection:
+    uses: ./.github/workflows/collator-selection.yml
+    secrets: inherit    
+
+  forkless-update-data:
+    uses: ./.github/workflows/forkless-update-data.yml
+    secrets: inherit # pass all secrets from initial workflow to nested    
+
+  forkless-update-no-data:
+    uses: ./.github/workflows/forkless-update-nodata.yml
+    secrets: inherit # pass all secrets from initial workflow to nested    
+
+  try-runtime:
+    uses: ./.github/workflows/try-runtime.yml
+    secrets: inherit # pass all secrets from initial workflow to nested    
+
+  node-only-update:
+    uses: ./.github/workflows/node-only-update.yml
+    secrets: inherit
+
+  governance:
+    uses: ./.github/workflows/governance.yml
+    secrets: inherit
+
+  codestyle:
+    uses: ./.github/workflows/codestyle.yml
+    secrets: inherit
+
+  polkadot-types:
+    uses: ./.github/workflows/polkadot-types.yml
+
+
+    

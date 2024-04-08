@@ -1,0 +1,193 @@
+# https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2586837021/Forkless+update+without+data
+# Forkless update without data replication
+
+# Triger: only call from main workflow(re-usable workflows)
+on:
+  workflow_call:
+
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+
+  prepare-execution-matrix:
+
+    name: execution matrix
+
+    runs-on: self-hosted-ci
+    outputs:
+      matrix: ${{ steps.create_matrix.outputs.matrix }}
+
+    steps:
+
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3.1.0
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v2
+
+      - name: Create Execution matrix
+        uses: CertainLach/create-matrix-action@v4
+        id: create_matrix
+        with:
+          matrix: |
+            network {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, runtime_features {opal-runtime}, wasm_name {opal}
+            network {sapphire}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}, runtime_features {sapphire-runtime}, wasm_name {quartz}
+            network {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, runtime_features {quartz-runtime}, wasm_name {quartz}
+            network {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, runtime_features {unique-runtime}, wasm_name {unique}
+
+  forkless-nodata:
+
+    needs: prepare-execution-matrix
+    # The type of runner that the job will run on
+    runs-on: [self-hosted-ci,large]
+
+    timeout-minutes: 1380
+
+    name: ${{ matrix.network }}-nodata
+
+    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+
+    strategy:
+      matrix:
+        include: ${{fromJson(needs.prepare-execution-matrix.outputs.matrix)}}
+
+    steps:
+
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3.1.0
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      # Prepare SHA  
+      - name: Prepare SHA
+        uses: ./.github/actions/prepare
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v2
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2.1.0
+        with:
+          username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
+      - name: Generate ENV related extend Dockerfile file for POLKADOT
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/Dockerfile-polkadot.j2
+          output_file: .docker/Dockerfile-polkadot.${{ matrix.relay_branch }}.yml
+          variables: |
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
+            
+      - name: Prepare polkadot
+        uses: ./.github/actions/buildContainer
+        id: polkadot
+        with:
+          container: uniquenetwork/builder-polkadot
+          tag: ${{ matrix.relay_branch }}
+          context: .docker
+          dockerfile: Dockerfile-polkadot.${{ matrix.relay_branch }}.yml
+          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
+      - name: Prepare mainnet
+        uses: ./.github/actions/buildContainer
+        id: mainnet
+        with:
+          container: uniquenetwork/ci-nodata-${{ matrix.network }}
+          tag: ${{ matrix.mainnet_branch }}
+          context: .docker
+          dockerfile: Dockerfile-unique-release
+          args: |
+            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }}
+            --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            --build-arg UNIQUE_VERSION=${{ matrix.mainnet_branch }}
+          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
+      - name: Prepare latest
+        uses: ./.github/actions/buildContainer
+        id: latest
+        with:
+          container: uniquenetwork/ci-nodata-${{ matrix.network }}
+          tag: ${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}
+          context: .
+          dockerfile: .docker/Dockerfile-unique
+          args: |
+            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }}
+            --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
+      - name: Extract wasms
+        uses: ./.github/actions/extractDocker
+        id: wasms
+        with:
+          image: ${{ steps.latest.outputs.name }}
+          directory: /wasm
+
+      - uses: actions/setup-node@v3.5.1
+        with:
+          node-version: 18
+
+      - name: Install baedeker
+        uses: UniqueNetwork/baedeker-action/setup@built
+
+      - name: Setup library
+        run: mkdir -p .baedeker/vendor/ && git clone https://github.com/UniqueNetwork/baedeker-library .baedeker/vendor/baedeker-library
+
+      - name: Start network
+        uses: UniqueNetwork/baedeker-action@built
+        id: bdk
+        with:
+          jpath: |
+            .baedeker/vendor
+          tla-str: |
+            relay_spec=rococo-local
+          inputs: |
+            .baedeker/node-only.jsonnet
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.name }}'}})
+            # nodata build uses old runtime, but new chain, thus we use mainnet image for spec generation, and then latest image for nodes.
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.latest.outputs.name }}'}}, for_chain = false)
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}})
+
+      - name: "Reconcile: runtime is upgraded"
+        working-directory: js-packages/tests
+        run: |
+          yarn
+          ../scripts/wait_for_first_block.sh
+          echo "Executing upgrade"
+          yarn ts-node --esm util/authorizeEnactUpgrade.ts ${{ steps.wasms.outputs.dir }}/${{ matrix.wasm_name }}-runtime/${{ matrix.wasm_name }}_runtime.compact.compressed.wasm
+        env:
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+
+      - name: Run Parallel tests after forkless upgrade
+        working-directory: js-packages/tests
+        run: |
+          yarn add mochawesome
+          ../scripts/wait_for_first_block.sh
+          echo "Ready to start tests"
+          NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
+        env:
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+
+      - name: Run Sequential tests after forkless upgrade
+        if: success() || failure()
+        working-directory: js-packages/tests
+        run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
+        env:
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+
+      - name: Remove builder cache
+        if: always()                   # run this step always
+        run: |
+          docker system prune -f
