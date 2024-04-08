@@ -31,7 +31,8 @@ use cumulus_client_consensus_aura::collators::basic::{
 use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImport;
 use cumulus_client_consensus_proposer::Proposer;
 use cumulus_client_service::{
-	build_relay_chain_interface, prepare_node_config, start_relay_chain_tasks, storage_proof_size, DARecoveryProfile, StartRelayChainTasksParams
+	build_relay_chain_interface, prepare_node_config, start_relay_chain_tasks, storage_proof_size,
+	DARecoveryProfile, StartRelayChainTasksParams,
 };
 use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_interface::{OverseerHandle, RelayChainInterface};
@@ -51,7 +52,9 @@ use futures::{
 };
 use jsonrpsee::RpcModule;
 use polkadot_service::CollatorPair;
-use sc_client_api::{AuxStore, Backend, BlockOf, BlockchainEvents, StorageProvider};
+use sc_client_api::{
+	backend::StateBackend, AuxStore, Backend, BlockOf, BlockchainEvents, StorageProvider,
+};
 use sc_consensus::ImportQueue;
 use sc_executor::{NativeElseWasmExecutor, NativeExecutionDispatch};
 use sc_network::NetworkBlock;
@@ -60,7 +63,7 @@ use sc_rpc::SubscriptionTaskExecutor;
 use sc_service::{Configuration, PartialComponents, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use serde::{Deserialize, Serialize};
-use sp_api::{ProvideRuntimeApi};
+use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraAuthorityPair;
@@ -68,7 +71,6 @@ use sp_keystore::KeystorePtr;
 use substrate_prometheus_endpoint::Registry;
 use tokio::time::Interval;
 use up_common::types::{opaque::*, Nonce};
-use sc_client_api::backend::StateBackend;
 
 use crate::{
 	chain_spec::RuntimeIdentification,

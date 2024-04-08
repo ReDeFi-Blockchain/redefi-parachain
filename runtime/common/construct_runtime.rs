@@ -41,7 +41,7 @@ macro_rules! construct_runtime {
 
 				EvmCoderSubstrate: pallet_evm_coder_substrate = 150,
 				EvmContractHelpers: pallet_evm_contract_helpers = 151,
-
+				BalancesAdapter: pallet_balances_adapter = 152,
 				Utility: pallet_utility = 156,
 			}
 		}

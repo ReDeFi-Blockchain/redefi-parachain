@@ -35,6 +35,10 @@ runtime-benchmarks = [
 	'staging-xcm-builder/runtime-benchmarks',
 ]
 std = [
+	"pallet-authorship/std",
+	"pallet-preimage/std",
+	"pallet-session/std",
+	"sp-consensus-aura/std",
 	'cumulus-pallet-aura-ext/std',
 	'cumulus-pallet-parachain-system/std',
 	'cumulus-pallet-xcm/std',
@@ -42,21 +46,17 @@ std = [
 	'cumulus-primitives-aura/std',
 	'cumulus-primitives-core/std',
 	'cumulus-primitives-utility/std',
+	'evm-coder/std',
+	'fp-rpc/std',
+	'fp-self-contained/std',
 	'frame-executive/std',
 	'frame-support/std',
 	'frame-system-rpc-runtime-api/std',
 	'frame-system/std',
 	'frame-try-runtime/std',
 	'pallet-aura/std',
+	'pallet-balances-adapter/std',
 	'pallet-balances/std',
-	'parity-scale-codec/std',
-	"pallet-authorship/std",
-	"pallet-preimage/std",
-	"pallet-session/std",
-	"sp-consensus-aura/std",
-	'evm-coder/std',
-	'fp-rpc/std',
-	'fp-self-contained/std',
 	'pallet-base-fee/std',
 	'pallet-ethereum/std',
 	'pallet-evm-coder-substrate/std',
@@ -68,6 +68,7 @@ std = [
 	'pallet-transaction-payment/std',
 	'pallet-treasury/std',
 	'pallet-utility/std',
+	'parity-scale-codec/std',
 	'polkadot-runtime-common/std',
 	'serde',
 	'sp-api/std',
@@ -182,6 +183,7 @@ fp-rpc = { workspace = true }
 fp-self-contained = { workspace = true }
 log = { workspace = true }
 num_enum = { workspace = true }
+pallet-balances-adapter = { workspace = true }
 pallet-base-fee = { workspace = true }
 pallet-ethereum = { workspace = true }
 pallet-evm = { workspace = true }
