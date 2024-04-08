@@ -193,12 +193,10 @@ pub mod pallet {
 		}
 
 		pub fn check_receiver(receiver: &T::CrossAccountId) -> DispatchResult {
-			match receiver.as_eth() {
-				addr if addr == &H160::zero() => {
-					return Err(<Error<T>>::ERC20InvalidReceiver.into())
-				}
-				_ => (),
-			}
+			ensure!(
+				&T::CrossAccountId::from_eth(H160::zero()) != receiver,
+				<Error<T>>::ERC20InvalidReceiver
+			);
 			Ok(())
 		}
 	}
