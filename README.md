@@ -2,7 +2,7 @@
 
 ## Project Description
 
-Custom parachain node templatate with EVM compatibility support based on the Unqiue Network Frontier [fork](https://github.com/UniqueNetwork/unique-frontier).
+Custom parachain for ReDeFi network [relay](https://github.com/ReDeFi-Blockchain/redefi-relay-runtime) with EVM compatibility support based on the Unqiue Network Frontier [fork](https://github.com/UniqueNetwork/unique-frontier).
 
 ## Rust compiler versions
 
