@@ -58,7 +58,7 @@ parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 	pub const SS58Prefix: u16 = 42;
 	// FIXME
-	pub const ChainId: u64 = 2222;
+	pub const ChainId: u64 = 1899;
 	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
 }
 
