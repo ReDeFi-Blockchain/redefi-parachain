@@ -19,7 +19,7 @@ debug-assertions = true
 inherits = "release"
 
 [workspace.dependencies]
-# Unique
+# Redefi
 evm-coder = { version = "0.4.3", default-features = false }
 pallet-balances-adapter = { path = "pallets/balances-adapter", default-features = false }
 pallet-evm-coder-substrate = { default-features = false, path = "pallets/evm-coder-substrate" }
@@ -29,7 +29,7 @@ uc-rpc = { path = "client/rpc" }
 up-common = { path = "primitives/common", default-features = false }
 up-data-structs = { path = "primitives/data-structs", default-features = false }
 
-# Unique: Runtimes
+# Redefi: Runtimes
 redefi-runtime = { path = "runtime/redefi" }
 
 # Frontier (Unique patches over the Parity version)

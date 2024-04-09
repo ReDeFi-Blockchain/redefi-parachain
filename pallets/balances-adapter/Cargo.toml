@@ -17,7 +17,7 @@ sp-std = { workspace = true }
 parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
 
-# Unique
+# Redefi
 evm-coder = { workspace = true }
 pallet-evm = { workspace = true }
 

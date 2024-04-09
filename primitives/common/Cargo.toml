@@ -1,11 +1,11 @@
 [package]
-authors = ['Unique Network <support@uniquenetwork.io>']
-description = 'Unique Runtime Common Primitives'
+authors = ['support@redefi.world>']
+description = 'Redefi Runtime Common Primitives'
 edition = '2021'
-homepage = 'https://unique.network'
+homepage = 'https://redefi.world'
 license = 'All Rights Reserved'
 name = 'up-common'
-repository = 'https://github.com/UniqueNetwork/unique-chain'
+repository = 'https://github.com/ReDeFi-Blockchain/redefi-parachain'
 version.workspace = true
 
 [features]

@@ -2,14 +2,14 @@
 # Package
 
 [package]
-authors = ['Unique Network <support@uniquenetwork.io>']
+authors = ['support@redefi.world']
 build = 'build.rs'
 description = 'Redefi Parachain Runtime'
 edition = '2021'
-homepage = 'https://unique.network'
+homepage = 'https://redefi.world'
 license = 'GPLv3'
 name = 'redefi-runtime'
-repository = 'https://github.com/UniqueNetwork/unique-chain'
+repository = 'https://github.com/ReDeFi-Blockchain/redefi-parachain'
 version.workspace = true
 
 [package.metadata.docs.rs]
