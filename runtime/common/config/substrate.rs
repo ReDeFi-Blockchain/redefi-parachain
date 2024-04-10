@@ -194,22 +194,22 @@ impl pallet_transaction_payment::Config for Runtime {
 
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
-	pub const ProposalBondMinimum: Balance = 1 * UNIQUE;
-	pub const ProposalBondMaximum: Balance = 1000 * UNIQUE;
+	pub const ProposalBondMinimum: Balance = 1 * DOLLAR;
+	pub const ProposalBondMaximum: Balance = 1000 * DOLLAR;
 	pub const SpendPeriod: BlockNumber = 5 * MINUTES;
 	pub const Burn: Permill = Permill::from_percent(0);
 	pub const TipCountdown: BlockNumber = 1 * DAYS;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);
-	pub const TipReportDepositBase: Balance = 1 * UNIQUE;
-	pub const DataDepositPerByte: Balance = 1 * CENTIUNIQUE;
-	pub const BountyDepositBase: Balance = 1 * UNIQUE;
+	pub const TipReportDepositBase: Balance = 1 * DOLLAR;
+	pub const DataDepositPerByte: Balance = 1 * CENTS;
+	pub const BountyDepositBase: Balance = 1 * DOLLAR;
 	pub const BountyDepositPayoutDelay: BlockNumber = 1 * DAYS;
 	pub const TreasuryModuleId: PalletId = PalletId(*b"py/trsry");
 	pub TreasuryAccount: AccountId = Treasury::account_id();
 	pub const BountyUpdatePeriod: BlockNumber = 14 * DAYS;
 	pub const MaximumReasonLength: u32 = 16384;
 	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
-	pub const BountyValueMinimum: Balance = 5 * UNIQUE;
+	pub const BountyValueMinimum: Balance = 5 * DOLLAR;
 	pub const MaxApprovals: u32 = 100;
 }
 

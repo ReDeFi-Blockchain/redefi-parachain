@@ -38,26 +38,25 @@ pub const RELAY_MINUTES: u32 = 60_000 / (MILLISECS_PER_RELAY_BLOCK as u32);
 pub const RELAY_HOURS: u32 = RELAY_MINUTES * 60;
 pub const RELAY_DAYS: u32 = RELAY_HOURS * 24;
 
-pub const MICROUNIQUE: Balance = 1_000_000_000_000;
-pub const MILLIUNIQUE: Balance = 1_000 * MICROUNIQUE;
-pub const CENTIUNIQUE: Balance = 10 * MILLIUNIQUE;
-pub const UNIQUE: Balance = 100 * CENTIUNIQUE;
+pub const MICROCENTS: Balance = 1_000_000_000_000;
+pub const MILLICENTS: Balance = 1_000 * MICROCENTS;
+pub const CENTS: Balance = 10 * MILLICENTS;
+pub const DOLLAR: Balance = 100 * CENTS;
 
 /// Minimum balance required to create or keep an account open.
 pub const EXISTENTIAL_DEPOSIT: u128 = 0;
 
 /// Amount of Balance reserved for candidate registration.
-pub const GENESIS_LICENSE_BOND: u128 = 1_000_000_000_000 * UNIQUE;
+pub const GENESIS_LICENSE_BOND: u128 = 1_000_000_000_000 * DOLLAR;
 /// Amount of maximum collators for Collator Selection.
 pub const MAX_COLLATORS: u32 = 10;
 /// How long a periodic session lasts in blocks.
 pub const SESSION_LENGTH: BlockNumber = HOURS;
 
-// Targeting 0.1 UNQ per transfer
+// Targeting 0.1 UNIT per transfer
 pub const WEIGHT_TO_FEE_COEFF: u64 = /*<weight2fee>*/74_374_502_416_291_841/*</weight2fee>*/;
 
-// Targeting 0.15 UNQ per transfer via ETH
-pub const MIN_GAS_PRICE: u64 = /*<mingasprice>*/1_873_548_000_299/*</mingasprice>*/;
+pub const MIN_GAS_PRICE: u64 = 238_095_238_096;
 
 /// We assume that ~10% of the block weight is consumed by `on_initalize` handlers.
 /// This is used to limit the maximal weight of a single extrinsic.
@@ -72,5 +71,5 @@ pub const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
 );
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = 501 * MICROUNIQUE / 2;
+	pub const TransactionByteFee: Balance = 501 * MICROCENTS / 2;
 }
