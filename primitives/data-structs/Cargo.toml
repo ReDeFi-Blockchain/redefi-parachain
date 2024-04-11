@@ -1,5 +1,5 @@
 [package]
-authors = ["support@redefi.world>"]
+authors = ['ReDeFi Network <support@redefi.world>']
 description = "Redefi data structs definitions"
 edition = "2021"
 homepage = 'https://redefi.world'

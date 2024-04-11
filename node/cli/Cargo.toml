@@ -2,7 +2,7 @@
 # Package
 
 [package]
-authors = ['support@redefi.world']
+authors = ['ReDeFi Network <support@redefi.world>']
 build = 'build.rs'
 description = 'Redefi Node'
 edition = '2021'
