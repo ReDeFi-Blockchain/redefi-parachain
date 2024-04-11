@@ -18,6 +18,9 @@ opt-level = 3
 debug-assertions = true
 inherits = "release"
 
+[patch.crates-io]
+ss58-registry = { git = "https://github.com/ReDeFi-Blockchain/ss58-registry.git", branch = "main" }
+
 [workspace.dependencies]
 # Redefi
 evm-coder = { version = "0.4.3", default-features = false }
