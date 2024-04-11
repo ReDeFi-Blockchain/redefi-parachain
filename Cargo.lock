@@ -13180,7 +13180,7 @@ dependencies = [
 [[package]]
 name = "ss58-registry"
 version = "1.48.0"
-source = "git+https://github.com/ReDeFi-Blockchain/ss58-registry.git?branch=main#cd056fcf1611b2c4da3abe6c77207c0a6745f537"
+source = "git+https://github.com/ReDeFi-Blockchain/ss58-registry.git?branch=parachain#cd056fcf1611b2c4da3abe6c77207c0a6745f537"
 dependencies = [
  "Inflector",
  "num-format",
