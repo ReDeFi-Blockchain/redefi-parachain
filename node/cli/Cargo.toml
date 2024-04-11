@@ -2,18 +2,18 @@
 # Package
 
 [package]
-authors = ['Unique Network <support@uniquenetwork.io>']
+authors = ['ReDeFi Network <support@redefi.world>']
 build = 'build.rs'
-description = 'Unique Node'
+description = 'Redefi Node'
 edition = '2021'
-homepage = 'https://unique.network'
+homepage = 'https://redefi.world'
 license = 'GPLv3'
-name = 'unique-node'
-repository = 'https://github.com/UniqueNetwork/unique-chain'
+name = 'redefi-node'
+repository = 'https://github.com/ReDeFi-Blockchain/redefi-parachain'
 version.workspace = true
 
 [[bin]]
-name = 'unique-collator'
+name = 'redefi-collator'
 path = "src/main.rs"
 
 [package.metadata.docs.rs]
@@ -35,20 +35,20 @@ cumulus-client-consensus-aura = { workspace = true }
 cumulus-client-consensus-common = { workspace = true }
 cumulus-client-consensus-proposer = { workspace = true }
 cumulus-client-network = { workspace = true }
+cumulus-client-parachain-inherent = { workspace = true }
 cumulus-client-service = { workspace = true }
 cumulus-primitives-aura = { workspace = true }
 cumulus-primitives-core = { workspace = true }
-cumulus-client-parachain-inherent = { workspace = true }
 cumulus-relay-chain-inprocess-interface = { workspace = true }
 cumulus-relay-chain-interface = { workspace = true }
 cumulus-relay-chain-minimal-node = { workspace = true }
 frame-benchmarking = { workspace = true }
 frame-benchmarking-cli = { workspace = true }
-redefi-runtime = { workspace = true, optional = true }
 pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 polkadot-cli = { workspace = true }
 polkadot-primitives = { workspace = true }
 polkadot-service = { workspace = true }
+redefi-runtime = { workspace = true, optional = true }
 sc-basic-authorship = { workspace = true }
 sc-chain-spec = { workspace = true }
 sc-cli = { workspace = true }
@@ -104,11 +104,9 @@ substrate-build-script-utils = { workspace = true }
 all-runtimes = ['redefi-runtime']
 default = ["redefi-runtime"]
 runtime-benchmarks = [
-	'redefi-runtime?/runtime-benchmarks',
 	'polkadot-cli/runtime-benchmarks',
 	'polkadot-service/runtime-benchmarks',
+	'redefi-runtime?/runtime-benchmarks',
 	'sc-service/runtime-benchmarks',
 ]
-try-runtime = [
-	'redefi-runtime?/try-runtime',
-]
+try-runtime = ['redefi-runtime?/try-runtime']
