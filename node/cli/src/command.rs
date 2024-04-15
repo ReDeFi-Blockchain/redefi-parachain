@@ -98,7 +98,7 @@ impl SubstrateCli for Cli {
 
 	//TODO use args
 	fn support_url() -> String {
-		"support@unique.network".into()
+		"support@redefi.world".into()
 	}
 
 	fn copyright_start_year() -> i32 {
@@ -135,7 +135,7 @@ impl SubstrateCli for RelayChainCli {
 	}
 	// TODO use args
 	fn support_url() -> String {
-		"support@unique.network".into()
+		"support@redefi.world".into()
 	}
 
 	fn copyright_start_year() -> i32 {

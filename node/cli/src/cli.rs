@@ -113,7 +113,7 @@ pub struct Cli {
 
 impl Cli {
 	pub fn node_name() -> String {
-		"Unique".into()
+		"ReDeFi".into()
 	}
 }
 
