@@ -38,7 +38,7 @@ mod runtime_common;
 pub use runtime_common::*;
 
 // FIXME
-pub const TOKEN_SYMBOL: &str = "OMN";
+pub const TOKEN_SYMBOL: &str = "RED";
 pub const DECIMALS: u8 = 18;
 
 /// This runtime version.
@@ -47,7 +47,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("redefi"),
 	impl_name: create_runtime_str!("redefi"),
 	authoring_version: 1,
-	spec_version: 1_009_0_010,
+	spec_version: 1_009_0_011,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
