@@ -139,7 +139,7 @@ impl<T> From<T> for WithPostDispatchInfo<T> {
 macro_rules! frontier_contract {
 	(
 		macro_rules! $res:ident {...}
-		impl$(<$($gen:ident $(: $($(+)? $bound:ty)*)?),+ $(,)?>)? Contract for $ty:ty {...}
+		impl$(<$( @INSTANCE($instance:ident),)? $($gen:ident $(: $($(+)? $bound:ty)*)?),+  $(,)?>)? Contract for $ty:ty {...}
 	) => {
 		/// Generate macro to convert function return value into Contract result
 		macro_rules! $res {
@@ -160,7 +160,11 @@ macro_rules! frontier_contract {
 				}
 			}};
 		}
-		impl $(<$($gen),+>)? $crate::Contract for $ty where T: crate::Config {
+		impl $(<$($gen),+$(,$instance)?>)? $crate::Contract for $ty
+			where
+					T: crate::Config $($(<$instance>)?)? ,
+					$($($instance: 'static,)?)?
+			{
 			type Error = ::pallet_evm_coder_substrate::execution::Error;
 			type WithPostInfo<R> = ::pallet_evm_coder_substrate::execution::WithPostDispatchInfo<R>;
 			type Result<R, E> = core::result::Result<R, E>;
