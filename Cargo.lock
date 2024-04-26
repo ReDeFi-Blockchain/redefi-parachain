@@ -6772,6 +6772,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-evm-assets"
+version = "0.0.0"
+dependencies = [
+ "evm-coder",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-balances",
+ "pallet-evm",
+ "pallet-evm-coder-substrate",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-evm-coder-substrate"
 version = "0.1.3"
 dependencies = [
