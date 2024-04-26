@@ -102,7 +102,7 @@ pub mod pallet {
 			const CURRENCY: Balance = 1_000_000;
 			const NATIVE: Balance = 1_000_000_000_000_000_000;
 			const BALANCE: Balance = 10_000;
-			let gbp_id: AssetId = Default::default();
+			let gbp_id: AssetId = 1;
 			let bx_id: AssetId = 0xBABBu16.into();
 
 			let gbp_asset = AssetDetails::<Balance, Address> {
