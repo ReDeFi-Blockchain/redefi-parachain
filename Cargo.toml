@@ -26,6 +26,7 @@ ss58-registry = { git = "https://github.com/ReDeFi-Blockchain/ss58-registry.git"
 # Redefi
 evm-coder = { version = "0.4.3", default-features = false }
 pallet-balances-adapter = { path = "pallets/balances-adapter", default-features = false }
+pallet-evm-assets = { default-features = false, path = "pallets/evm-assets" }
 pallet-evm-coder-substrate = { default-features = false, path = "pallets/evm-coder-substrate" }
 pallet-evm-contract-helpers = { path = "pallets/evm-contract-helpers", default-features = false }
 precompile-utils-macro = { path = "runtime/common/ethereum/precompiles/utils/macro" }

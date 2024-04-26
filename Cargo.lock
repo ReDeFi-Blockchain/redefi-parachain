@@ -6773,20 +6773,17 @@ dependencies = [
 
 [[package]]
 name = "pallet-evm-assets"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "evm-coder",
- "frame-benchmarking",
  "frame-support",
  "frame-system",
- "log",
  "pallet-balances",
  "pallet-evm",
  "pallet-evm-coder-substrate",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
- "sp-io",
  "sp-runtime",
  "sp-std",
 ]
@@ -9830,6 +9827,7 @@ dependencies = [
  "pallet-base-fee",
  "pallet-ethereum",
  "pallet-evm",
+ "pallet-evm-assets",
  "pallet-evm-coder-substrate",
  "pallet-evm-contract-helpers",
  "pallet-evm-precompile-simple",

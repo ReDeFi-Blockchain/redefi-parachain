@@ -11,7 +11,7 @@ impl<T: Config> Pallet<T> {
 
 	pub(crate) fn asset_id_to_address(asset: &AssetId) -> H160 {
 		let mut buff = [0; 20];
-		buff[..4].copy_from_slice(T::AddressPrefix::get());
+		buff[..4].copy_from_slice(&T::AddressPrefix::get());
 		buff[4..20].copy_from_slice(&AssetId::to_be_bytes(*asset));
 		H160(buff)
 	}

@@ -145,3 +145,15 @@ impl pallet_balances_adapter::Config for Runtime {
 	type Symbol = Symbol;
 	type WeightInfo = pallet_balances::weights::SubstrateWeight<Self>;
 }
+
+parameter_types! {
+	pub Prefix: [u8; 4] = [0xFF, 0xFF, 0xFF, 0xFF];
+	pub StringLimit: u32 = 16;
+}
+impl pallet_evm_assets::Config for Runtime {
+	#[doc = r" Address prefix for assets evm mirrors"]
+	type AddressPrefix = Prefix;
+
+	#[doc = r" The maximum length of a name or symbol stored on-chain."]
+	type StringLimit = StringLimit;
+}

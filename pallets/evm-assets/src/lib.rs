@@ -1,8 +1,10 @@
+#![cfg_attr(not(feature = "std"), no_std)]
+
 use evm_coder::ToLog;
 use frame_support::{dispatch::DispatchResult, ensure};
 pub use pallet::*;
 use pallet_evm::Pallet as PalletEvm;
-use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
+use pallet_evm_coder_substrate::{types::String, SubstrateRecorder, WithRecorder};
 use sp_core::{Get, H160, U256};
 use sp_runtime::ArithmeticError;
 use sp_std::{marker::PhantomData, ops::Deref, prelude::*};
@@ -43,7 +45,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + pallet_evm_coder_substrate::Config {
 		/// Address prefix for assets evm mirrors
 		#[pallet::constant]
-		type AddressPrefix: Get<&'static [u8; 4]>;
+		type AddressPrefix: Get<[u8; 4]>;
 
 		/// The maximum length of a name or symbol stored on-chain.
 		#[pallet::constant]

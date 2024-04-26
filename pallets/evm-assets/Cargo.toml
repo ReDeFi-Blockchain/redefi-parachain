@@ -5,26 +5,20 @@ homepage = "https://substrate.io"
 license = "Apache-2.0"
 name = "pallet-evm-assets"
 readme = "README.md"
-
-# [lints]
-# workspace = true
-
-[package.metadata.docs.rs]
-targets = ["x86_64-unknown-linux-gnu"]
+version = "0.1.0"
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.6.1", default-features = false }
-log = { workspace = true }
-scale-info = { version = "2.11.1", default-features = false, features = ["derive"] }
-sp-std = { workspace = true }
-# Needed for various traits. In our case, `OnFinalize`.
-sp-runtime = { workspace = true }
-# Needed for type-safe access to storage DB.
+# Substrate
 frame-support = { workspace = true }
-# `system` module provides us with all sorts of useful stuff and macros depend on it being around.
-frame-benchmarking = { workspace = true, optional = true }
 frame-system = { workspace = true }
+pallet-balances = { workspace = true }
 sp-core = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
+
+#Parity
+parity-scale-codec = { workspace = true }
+scale-info = { workspace = true }
 
 # Redefi
 evm-coder = { workspace = true }
@@ -33,42 +27,17 @@ pallet-evm = { workspace = true }
 #Local
 pallet-evm-coder-substrate = { workspace = true }
 
-[dev-dependencies]
-pallet-balances = { workspace = true }
-sp-io = { workspace = true }
-sp-std = { workspace = true }
-
 [features]
 default = ["std"]
-runtime-benchmarks = [
-	"frame-benchmarking/runtime-benchmarks",
-	"frame-support/runtime-benchmarks",
-	"frame-system/runtime-benchmarks",
-	"pallet-balances/runtime-benchmarks",
-	"sp-runtime/runtime-benchmarks",
-]
 std = [
-	"codec/std",
 	"evm-coder/std",
-	"frame-benchmarking?/std",
 	"frame-support/std",
 	"frame-system/std",
-	"log/std",
 	"pallet-balances/std",
 	"pallet-evm-coder-substrate/std",
 	"pallet-evm/std",
-	"scale-info/std",
 	"sp-core/std",
-	"sp-io/std",
-	"sp-runtime/std",
 	"sp-std/std",
 ]
-
 stubgen = ["evm-coder/stubgen"]
-
-try-runtime = [
-	"frame-support/try-runtime",
-	"frame-system/try-runtime",
-	"pallet-balances/try-runtime",
-	"sp-runtime/try-runtime",
-]
+try-runtime = ["frame-support/try-runtime"]
