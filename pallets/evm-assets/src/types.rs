@@ -25,31 +25,11 @@ pub(super) type AssetId = u128;
 pub(super) type Balance = u128;
 pub(super) type Address = H160;
 
-#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+#[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo, Default)]
 pub struct AssetDetails<Balance, Address> {
-	/// Can change `owner`, `issuer`, `freezer` and `admin` accounts.
 	pub(super) owner: Address,
-	/// Can mint tokens.
-	pub(super) issuer: Address,
-	/// Can thaw tokens, force transfers and burn tokens from any account.
-	pub(super) admin: Address,
-	/// Can freeze tokens.
-	pub(super) freezer: Address,
 	/// The total supply across all accounts.
 	pub(super) supply: Balance,
-	// /// The ED for virtual accounts.
-	// pub(super) min_balance: Balance,
-	// /// If `true`, then any account with this asset is given a provider reference. Otherwise, it
-	// /// requires a consumer reference.
-	// pub(super) is_sufficient: bool,
-	// /// The total number of accounts.
-	// pub(super) accounts: u32,
-	// /// The total number of accounts for which we have placed a self-sufficient reference.
-	// pub(super) sufficients: u32,
-	// /// The total number of approvals.
-	// pub(super) approvals: u32,
-	// /// The status of the asset
-	// pub(super) status: AssetStatus,
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, Default, RuntimeDebug, MaxEncodedLen, TypeInfo)]

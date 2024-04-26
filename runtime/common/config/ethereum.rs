@@ -148,7 +148,7 @@ impl pallet_balances_adapter::Config for Runtime {
 
 parameter_types! {
 	pub Prefix: [u8; 4] = [0xFF, 0xFF, 0xFF, 0xFF];
-	pub StringLimit: u32 = 16;
+	pub StringLimit: u32 = 32;
 }
 impl pallet_evm_assets::Config for Runtime {
 	#[doc = r" Address prefix for assets evm mirrors"]

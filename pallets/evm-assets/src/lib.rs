@@ -3,7 +3,7 @@
 use evm_coder::ToLog;
 use frame_support::{dispatch::DispatchResult, ensure};
 pub use pallet::*;
-use pallet_evm::Pallet as PalletEvm;
+use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::{types::String, SubstrateRecorder, WithRecorder};
 use sp_core::{Get, H160, U256};
 use sp_runtime::ArithmeticError;
@@ -89,4 +89,66 @@ pub mod pallet {
 	#[pallet::pallet]
 	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(_);
+
+	#[pallet::genesis_config]
+	#[derive(frame_support::DefaultNoBound)]
+	pub struct GenesisConfig<T: Config> {
+		accounts: Vec<T::AccountId>,
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
+		fn build(&self) {
+			const CURRENCY: Balance = 1_000_000;
+			const NATIVE: Balance = 1_000_000_000_000_000_000;
+			const BALANCE: Balance = 10_000;
+			let gbp_id: AssetId = Default::default();
+			let bx_id: AssetId = 0xBABBu16.into();
+
+			let gbp_asset = AssetDetails::<Balance, Address> {
+				supply: BALANCE * CURRENCY * self.accounts.len() as Balance,
+				..Default::default()
+			};
+			<Asset<T>>::insert(gbp_id, gbp_asset);
+
+			let bx_asset = AssetDetails::<Balance, Address> {
+				supply: BALANCE * NATIVE * self.accounts.len() as Balance,
+				..Default::default()
+			};
+			<Asset<T>>::insert(bx_id, bx_asset);
+
+			self.accounts
+				.iter()
+				.map(|acc| *T::CrossAccountId::from_sub(acc.clone()).as_eth())
+				.for_each(|adr| {
+					<Balances<T>>::insert(gbp_id, adr, BALANCE * CURRENCY);
+					<Balances<T>>::insert(bx_id, adr, BALANCE * NATIVE);
+				});
+			let gbp_meta = AssetMetadata::<BoundedVec<u8, T::StringLimit>> {
+				name: "Great Britain Pound"
+					.as_bytes()
+					.to_vec()
+					.try_into()
+					.unwrap(),
+				symbol: "GBP".as_bytes().to_vec().try_into().unwrap(),
+				decimals: 6,
+				is_frozen: false,
+			};
+
+			<Metadata<T>>::insert(gbp_id, gbp_meta);
+
+			let bx_meta = AssetMetadata::<BoundedVec<u8, T::StringLimit>> {
+				name: "Relaychain native token"
+					.as_bytes()
+					.to_vec()
+					.try_into()
+					.unwrap(),
+				symbol: "BAX".as_bytes().to_vec().try_into().unwrap(),
+				decimals: 18,
+				is_frozen: false,
+			};
+
+			<Metadata<T>>::insert(bx_id, bx_meta);
+		}
+	}
 }
