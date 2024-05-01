@@ -88,6 +88,7 @@ impl pallet_evm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnMethodCall = (
 		pallet_balances_adapter::eth::AdapterOnMethodCall<Self>,
+		pallet_evm_assets::eth::AdapterOnMethodCall<Self>,
 		pallet_evm_contract_helpers::HelpersOnMethodCall<Self>,
 	);
 	type OnCreate = pallet_evm_contract_helpers::HelpersOnCreate<Self>;
@@ -133,7 +134,7 @@ parameter_types! {
 	pub Name: String = String::from_utf8_lossy(VERSION.impl_name.as_ref()).to_string();
 	pub Symbol: String = TOKEN_SYMBOL.to_string();
 	pub const AdapterContractAddress: H160 = H160([
-		0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0xFF, 0xFF, 0xFF, 0xFF, 0xBA, 0xBB, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	]);
 }
 impl pallet_balances_adapter::Config for Runtime {
@@ -151,9 +152,7 @@ parameter_types! {
 	pub StringLimit: u32 = 32;
 }
 impl pallet_evm_assets::Config for Runtime {
-	#[doc = r" Address prefix for assets evm mirrors"]
 	type AddressPrefix = Prefix;
 
-	#[doc = r" The maximum length of a name or symbol stored on-chain."]
 	type StringLimit = StringLimit;
 }

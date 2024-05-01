@@ -1,7 +1,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use evm_coder::ToLog;
-use frame_support::{dispatch::DispatchResult, ensure};
+use frame_support::{
+	dispatch::DispatchResult, ensure, pallet_prelude::*, traits::OnRuntimeUpgrade,
+};
 pub use pallet::*;
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::{types::String, SubstrateRecorder, WithRecorder};
@@ -18,13 +20,13 @@ pub mod eth;
 pub mod hanlde;
 use hanlde::*;
 
+pub mod migration;
+
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::{
-		pallet_prelude::{StorageDoubleMap, *},
-		Blake2_128Concat,
-	};
+	use frame_support::Blake2_128Concat;
 
+	use self::migration::init_assets_with;
 	use super::*;
 
 	/// The in-code storage version.
@@ -99,56 +101,7 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
-			const CURRENCY: Balance = 1_000_000;
-			const NATIVE: Balance = 1_000_000_000_000_000_000;
-			const BALANCE: Balance = 10_000;
-			let gbp_id: AssetId = 1;
-			let bx_id: AssetId = 0xBABBu16.into();
-
-			let gbp_asset = AssetDetails::<Balance, Address> {
-				supply: BALANCE * CURRENCY * self.accounts.len() as Balance,
-				..Default::default()
-			};
-			<Asset<T>>::insert(gbp_id, gbp_asset);
-
-			let bx_asset = AssetDetails::<Balance, Address> {
-				supply: BALANCE * NATIVE * self.accounts.len() as Balance,
-				..Default::default()
-			};
-			<Asset<T>>::insert(bx_id, bx_asset);
-
-			self.accounts
-				.iter()
-				.map(|acc| *T::CrossAccountId::from_sub(acc.clone()).as_eth())
-				.for_each(|adr| {
-					<Balances<T>>::insert(gbp_id, adr, BALANCE * CURRENCY);
-					<Balances<T>>::insert(bx_id, adr, BALANCE * NATIVE);
-				});
-			let gbp_meta = AssetMetadata::<BoundedVec<u8, T::StringLimit>> {
-				name: "Great Britain Pound"
-					.as_bytes()
-					.to_vec()
-					.try_into()
-					.unwrap(),
-				symbol: "GBP".as_bytes().to_vec().try_into().unwrap(),
-				decimals: 6,
-				is_frozen: false,
-			};
-
-			<Metadata<T>>::insert(gbp_id, gbp_meta);
-
-			let bx_meta = AssetMetadata::<BoundedVec<u8, T::StringLimit>> {
-				name: "Relaychain native token"
-					.as_bytes()
-					.to_vec()
-					.try_into()
-					.unwrap(),
-				symbol: "BAX".as_bytes().to_vec().try_into().unwrap(),
-				decimals: 18,
-				is_frozen: false,
-			};
-
-			<Metadata<T>>::insert(bx_id, bx_meta);
+			init_assets_with::<T>(&self.accounts[..])
 		}
 	}
 }
