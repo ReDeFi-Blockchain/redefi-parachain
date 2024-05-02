@@ -22,6 +22,7 @@ use hanlde::*;
 
 pub mod migration;
 
+pub(crate) const LOG_TARGET: &str = "runtime::evm-assets";
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::Blake2_128Concat;
@@ -87,6 +88,10 @@ pub mod pallet {
 	/// Metadata of an asset.
 	pub(super) type Metadata<T: Config> =
 		StorageMap<_, Blake2_128Concat, AssetId, AssetMetadata<BoundedVec<u8, T::StringLimit>>>;
+
+	#[pallet::storage]
+	pub(super) type SupportedAssets<T: Config> =
+		StorageValue<Value = Assets, QueryKind = ValueQuery>;
 
 	#[pallet::pallet]
 	#[pallet::storage_version(STORAGE_VERSION)]

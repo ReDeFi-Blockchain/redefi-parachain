@@ -25,6 +25,13 @@ pub(super) type AssetId = u128;
 pub(super) type Balance = u128;
 pub(super) type Address = H160;
 
+pub(crate) const CURRENCY: Balance = 1_000_000;
+pub(crate) const NATIVE: Balance = 1_000_000_000_000_000_000;
+pub(crate) const BALANCE: Balance = 10_000;
+
+pub(crate) const GBP_ID: AssetId = 0xBABB0000_00000000_00000000_00000010;
+pub(crate) const BAX_ID: AssetId = 0x00000000_00000000_00000000_0000BABB;
+
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo, Default)]
 pub struct AssetDetails<Balance, Address> {
 	pub(super) owner: Address,
@@ -42,4 +49,15 @@ pub struct AssetMetadata<BoundedString> {
 	pub(super) decimals: u8,
 	/// Whether the asset metadata may be changed by a non Force origin.
 	pub(super) is_frozen: bool,
+}
+
+bitflags::bitflags! {
+	/// Supported assets.
+	#[derive(Encode, Decode, MaxEncodedLen, Default, TypeInfo)]
+	pub struct Assets: u8 {
+		const BAX = 1;
+		const RED = 1 << 1;
+		const GBP = 1 << 2;
+		const EUR = 1 << 3;
+	}
 }
