@@ -36,6 +36,7 @@ runtime-benchmarks = [
 ]
 std = [
 	"pallet-authorship/std",
+	"pallet-evm-assets/std",
 	"pallet-preimage/std",
 	"pallet-session/std",
 	"sp-consensus-aura/std",
@@ -187,6 +188,7 @@ pallet-balances-adapter = { workspace = true }
 pallet-base-fee = { workspace = true }
 pallet-ethereum = { workspace = true }
 pallet-evm = { workspace = true }
+pallet-evm-assets = { workspace = true }
 pallet-evm-coder-substrate = { workspace = true }
 pallet-evm-contract-helpers = { workspace = true }
 pallet-evm-precompile-simple = { workspace = true }
