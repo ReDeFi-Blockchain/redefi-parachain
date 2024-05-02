@@ -7,6 +7,7 @@ pub(crate) const SUDO_STORAGE_KEY: [u8; 32] =
 pub(crate) fn init_assets_with<T: Config>(accounts: &[T::AccountId]) {
 	init_bax_with::<T>(accounts);
 	init_gbp_with::<T>(accounts);
+	<SupportedAssets<T>>::set(Assets::BAX | Assets::GBP);
 }
 
 pub(crate) fn init_bax_with<T: Config>(accounts: &[T::AccountId]) {
