@@ -14,7 +14,6 @@ pub(crate) fn init_bax_with<T: Config>(accounts: &[T::AccountId], owner: &T::Acc
 	let bx_asset = AssetDetails::<Balance, Address> {
 		supply: BALANCE * NATIVE * accounts.len() as Balance,
 		owner: *T::CrossAccountId::from_sub(owner.clone()).as_eth(),
-		..Default::default()
 	};
 	<Asset<T>>::insert(BAX_ID, bx_asset);
 
@@ -43,7 +42,6 @@ pub(crate) fn init_gbp_with<T: Config>(accounts: &[T::AccountId], owner: &T::Acc
 	let gbp_asset = AssetDetails::<Balance, Address> {
 		supply: BALANCE * CURRENCY * accounts.len() as Balance,
 		owner: *T::CrossAccountId::from_sub(owner.clone()).as_eth(),
-		..Default::default()
 	};
 	<Asset<T>>::insert(GBP_ID, gbp_asset);
 
@@ -106,8 +104,18 @@ where
 			supported_assets |= Assets::GBP;
 		}
 
+		<Asset<T>>::mutate(BAX_ID, |a| {
+			let Some(asset) = a else { return };
+			asset.owner = *T::CrossAccountId::from_sub(accs[0].clone()).as_eth();
+		});
+
+		<Asset<T>>::mutate(GBP_ID, |a| {
+			let Some(asset) = a else { return };
+			asset.owner = *T::CrossAccountId::from_sub(accs[0].clone()).as_eth();
+		});
+
 		<SupportedAssets<T>>::set(supported_assets);
 
-		T::DbWeight::get().reads_writes(2, 8)
+		T::DbWeight::get().reads_writes(4, 10)
 	}
 }

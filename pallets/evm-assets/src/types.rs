@@ -61,3 +61,11 @@ bitflags::bitflags! {
 		const EUR = 1 << 3;
 	}
 }
+
+bitflags::bitflags! {
+	/// Supported assets.
+	#[derive(Encode, Decode, MaxEncodedLen, Default, TypeInfo)]
+	pub struct AdmninistratorPermissions: u8 {
+	// TODO
+	}
+}

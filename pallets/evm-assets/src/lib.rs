@@ -73,6 +73,17 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
+	pub(super) type Admins<T: Config> = StorageDoubleMap<
+		_,
+		Twox64Concat,
+		AssetId,
+		Twox64Concat,
+		Address,
+		AdmninistratorPermissions,
+		ValueQuery,
+	>;
+
+	#[pallet::storage]
 	/// Balances
 	pub(super) type Balances<T: Config> = StorageDoubleMap<
 		_,
