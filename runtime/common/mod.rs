@@ -85,6 +85,15 @@ pub type SignedExtra = (
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
 );
+pub type Migrations = migrations::Unreleased;
+/// The runtime migrations per release.
+#[allow(deprecated, missing_docs)]
+pub mod migrations {
+	use super::*;
+
+	/// Unreleased migrations. Add new ones here:
+	pub type Unreleased = (pallet_evm_assets::migration::InitializationWithSudoAsHolder<Runtime>,);
+}
 
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
@@ -93,7 +102,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	(),
+	Migrations,
 >;
 
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;

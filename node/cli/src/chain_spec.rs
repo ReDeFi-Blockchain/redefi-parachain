@@ -115,8 +115,11 @@ macro_rules! testnet_genesis {
 					.iter()
 					.cloned()
 					// 1e13 UNQ
-					.map(|k| (k, 10_000_000_000_000u128))
+					.map(|k| (k, 2_000_000_000_000_000_000_000_000_000_000u128))
 					.collect::<Vec<_>>()
+			},
+			"evmAssets": {
+				"accounts": $endowed_accounts,
 			},
 			"parachainInfo": {
 				"parachainId": $id,
