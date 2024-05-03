@@ -4,15 +4,16 @@ use crate::*;
 pub(crate) const SUDO_STORAGE_KEY: [u8; 32] =
 	hex_literal::hex!("5c0d1176a568c1f92944340dbfed9e9c530ebca703c85910e7164cb7d1c9e47b");
 
-pub(crate) fn init_assets_with<T: Config>(accounts: &[T::AccountId]) {
-	init_bax_with::<T>(accounts);
-	init_gbp_with::<T>(accounts);
+pub(crate) fn init_assets_with<T: Config>(accounts: &[T::AccountId], owner: &T::AccountId) {
+	init_bax_with::<T>(accounts, owner);
+	init_gbp_with::<T>(accounts, owner);
 	<SupportedAssets<T>>::set(Assets::BAX | Assets::GBP);
 }
 
-pub(crate) fn init_bax_with<T: Config>(accounts: &[T::AccountId]) {
+pub(crate) fn init_bax_with<T: Config>(accounts: &[T::AccountId], owner: &T::AccountId) {
 	let bx_asset = AssetDetails::<Balance, Address> {
 		supply: BALANCE * NATIVE * accounts.len() as Balance,
+		owner: *T::CrossAccountId::from_sub(owner.clone()).as_eth(),
 		..Default::default()
 	};
 	<Asset<T>>::insert(BAX_ID, bx_asset);
@@ -38,9 +39,10 @@ pub(crate) fn init_bax_with<T: Config>(accounts: &[T::AccountId]) {
 	<Metadata<T>>::insert(BAX_ID, bx_meta);
 }
 
-pub(crate) fn init_gbp_with<T: Config>(accounts: &[T::AccountId]) {
+pub(crate) fn init_gbp_with<T: Config>(accounts: &[T::AccountId], owner: &T::AccountId) {
 	let gbp_asset = AssetDetails::<Balance, Address> {
 		supply: BALANCE * CURRENCY * accounts.len() as Balance,
+		owner: *T::CrossAccountId::from_sub(owner.clone()).as_eth(),
 		..Default::default()
 	};
 	<Asset<T>>::insert(GBP_ID, gbp_asset);
@@ -95,16 +97,14 @@ where
 		let mut supported_assets = <SupportedAssets<T>>::get();
 
 		if !supported_assets.contains(Assets::BAX) {
-			init_bax_with::<T>(&accs);
+			init_bax_with::<T>(&accs, &accs[0]);
 			supported_assets |= Assets::BAX;
 		}
 
 		if !supported_assets.contains(Assets::GBP) {
-			init_gbp_with::<T>(&accs);
+			init_gbp_with::<T>(&accs, &accs[0]);
 			supported_assets |= Assets::GBP;
 		}
-
-		init_assets_with::<T>(&accs);
 
 		<SupportedAssets<T>>::set(supported_assets);
 

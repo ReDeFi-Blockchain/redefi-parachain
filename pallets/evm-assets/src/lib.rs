@@ -101,12 +101,16 @@ pub mod pallet {
 	#[derive(frame_support::DefaultNoBound)]
 	pub struct GenesisConfig<T: Config> {
 		accounts: Vec<T::AccountId>,
+		owner: Option<T::AccountId>,
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
-			init_assets_with::<T>(&self.accounts[..])
+			init_assets_with::<T>(
+				&self.accounts[..],
+				self.owner.as_ref().unwrap_or(&self.accounts[0]),
+			)
 		}
 	}
 }
