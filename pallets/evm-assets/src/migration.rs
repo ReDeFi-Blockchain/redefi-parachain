@@ -25,11 +25,7 @@ pub(crate) fn init_bax_with<T: Config>(accounts: &[T::AccountId], owner: &T::Acc
 		});
 
 	let bx_meta = AssetMetadata::<BoundedVec<u8, T::StringLimit>> {
-		name: "Relaychain native token"
-			.as_bytes()
-			.to_vec()
-			.try_into()
-			.unwrap(),
+		name: "redefi".as_bytes().to_vec().try_into().unwrap(),
 		symbol: "BAX".as_bytes().to_vec().try_into().unwrap(),
 		decimals: 18,
 		is_frozen: false,
@@ -117,5 +113,19 @@ where
 		<SupportedAssets<T>>::set(supported_assets);
 
 		T::DbWeight::get().reads_writes(4, 10)
+	}
+}
+
+pub struct FixBaxMeta<T: Config>(PhantomData<T>);
+impl<T: Config> OnRuntimeUpgrade for FixBaxMeta<T>
+where
+	T::AccountId: for<'a> TryFrom<&'a [u8]>,
+{
+	fn on_runtime_upgrade() -> Weight {
+		<Metadata<T>>::mutate(BAX_ID, |m| {
+			let Some(meta) = m else { return };
+			meta.name = b"redefi".to_vec().try_into().unwrap();
+		});
+		T::DbWeight::get().reads_writes(1, 1)
 	}
 }
