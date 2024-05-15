@@ -2,13 +2,19 @@
 
 use evm_coder::ToLog;
 use frame_support::{
-	dispatch::DispatchResult, ensure, pallet_prelude::*, traits::OnRuntimeUpgrade,
+	dispatch::DispatchResult,
+	ensure,
+	pallet_prelude::*,
+	traits::{
+		tokens::{fungibles, DepositConsequence, WithdrawConsequence},
+		OnRuntimeUpgrade,
+	},
 };
 pub use pallet::*;
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::{types::String, SubstrateRecorder, WithRecorder};
 use sp_core::{Get, H160, U256};
-use sp_runtime::ArithmeticError;
+use sp_runtime::{traits::Zero, ArithmeticError};
 use sp_std::{marker::PhantomData, ops::Deref, prelude::*};
 pub mod types;
 use types::*;
@@ -20,6 +26,7 @@ pub mod eth;
 pub mod hanlde;
 use hanlde::*;
 
+mod impl_fungibles;
 pub mod migration;
 
 pub(crate) const LOG_TARGET: &str = "runtime::evm-assets";
@@ -41,6 +48,7 @@ pub mod pallet {
 		ERC20InvalidSender,
 		Erc20InvalidSpender,
 		ERC20InsufficientBalance,
+		OwnableUnauthorizedAccount,
 		AssetNotFound,
 	}
 

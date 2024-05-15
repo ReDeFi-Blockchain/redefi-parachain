@@ -102,11 +102,41 @@ impl<T: Config> FungibleAssetsHandle<T> {
 	}
 }
 
+#[solidity_interface(name = ERC20Burnable, is(ERC20), enum(derive(PreDispatch)), enum_attr(weight))]
+impl<T: Config> FungibleAssetsHandle<T> {
+	pub fn burn(&mut self, caller: Caller, value: U256) -> Result<()> {
+		self.consume_store_reads(2)?;
+		self.consume_store_writes(2)?;
+		let value = value.try_into().map_err(|_| "value overflow")?;
+		<Pallet<T>>::burn(self.asset_id(), &caller, value).map_err(dispatch_to_evm::<T>)
+	}
+
+	pub fn burn_from(&mut self, caller: Caller, account: Address, value: U256) -> Result<()> {
+		self.consume_store_reads(3)?;
+		self.consume_store_writes(3)?;
+		let value = value.try_into().map_err(|_| "value overflow")?;
+		<Pallet<T>>::spend_allowance(self.asset_id(), &account, &caller, value)
+			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::burn(self.asset_id(), &account, value).map_err(dispatch_to_evm::<T>)
+	}
+}
+
+#[solidity_interface(name = ERC20Mintable, is(ERC20), enum(derive(PreDispatch)), enum_attr(weight))]
+impl<T: Config> FungibleAssetsHandle<T> {
+	pub fn mint(&mut self, caller: Caller, to: Address, amount: U256) -> Result<()> {
+		self.consume_store_reads(2)?;
+		self.consume_store_writes(2)?;
+		<Pallet<T>>::check_owner(self.asset_id(), &caller).map_err(dispatch_to_evm::<T>)?;
+		let amount = amount.try_into().map_err(|_| "value overflow")?;
+		<Pallet<T>>::mint(self.asset_id(), &to, amount).map_err(dispatch_to_evm::<T>)
+	}
+}
+
 /// Implements [`OnMethodCall`], which delegates call to [`NativeFungibleHandle`]
 pub struct AdapterOnMethodCall<T: Config>(PhantomData<*const T>);
 impl<T: Config> OnMethodCall<T> for AdapterOnMethodCall<T>
 where
-	T::AccountId: AsRef<[u8; 32]>,
+	T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]>,
 {
 	fn is_reserved(contract: &H160) -> bool {
 		<Pallet<T>>::address_to_asset_id(contract).is_some()
@@ -123,7 +153,10 @@ where
 
 		let adapter_handle =
 			<FungibleAssetsHandle<T>>::new_with_gas_limit(asset_id?, handle.remaining_gas());
-		pallet_evm_coder_substrate::call(handle, adapter_handle)
+		pallet_evm_coder_substrate::call::<_, NativeFungibleAssetsCall<T>, _, _>(
+			handle,
+			adapter_handle,
+		)
 	}
 
 	fn get_code(contract: &H160) -> Option<Vec<u8>> {
@@ -133,7 +166,7 @@ where
 
 #[solidity_interface(
 	name = NativeFungibleAssets,
-	is(ERC20),
+	is(ERC20, ERC20Burnable, ERC20Mintable),
 	enum(derive(PreDispatch))
 )]
 impl<T: Config> FungibleAssetsHandle<T> where T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]> {}
