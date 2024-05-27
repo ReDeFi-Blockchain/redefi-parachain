@@ -47,7 +47,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("redefi"),
 	impl_name: create_runtime_str!("redefi"),
 	authoring_version: 1,
-	spec_version: 1_009_0_013,
+	spec_version: 1_009_0_014,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -57,9 +57,18 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 	pub const SS58Prefix: u16 = 6852;
-	pub const ChainId: u64 = 1899;
 	// FIXME
 	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
+}
+
+#[cfg(not(feature = "testnet-id"))]
+parameter_types! {
+	pub const ChainId: u64 = 1899;
+}
+
+#[cfg(feature = "testnet-id")]
+parameter_types! {
+	pub const ChainId: u64 = 11899;
 }
 
 construct_runtime!();

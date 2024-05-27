@@ -92,6 +92,9 @@ std = [
 	'up-common/std',
 	'up-data-structs/std',
 ]
+
+testnet-id = []
+
 try-runtime = [
 	"pallet-authorship/try-runtime",
 	"pallet-preimage/try-runtime",
