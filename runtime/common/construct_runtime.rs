@@ -29,11 +29,18 @@ macro_rules! construct_runtime {
 				AuraExt: cumulus_pallet_aura_ext = 26,
 
 				Balances: pallet_balances = 30,
+
 				// RandomnessCollectiveFlip = 31
 				Timestamp: pallet_timestamp = 32,
 				TransactionPayment: pallet_transaction_payment = 33,
 				Treasury: pallet_treasury = 34,
 				Sudo: pallet_sudo = 35,
+
+				// XCM
+
+				PolkadotXcm: pallet_xcm = 41,
+				CumulusXcm: cumulus_pallet_xcm = 42,
+				MessageQueue: pallet_message_queue = 43,
 
 				// Frontier
 				EVM: pallet_evm = 100,

@@ -87,6 +87,7 @@ pallet-balances = { default-features = false, version = "31.0.0" }
 pallet-collective = { default-features = false, version = "31.0.0" }
 pallet-democracy = { default-features = false, version = "31.0.0" }
 pallet-membership = { default-features = false, version = "31.0.0" }
+pallet-message-queue = { default-features = false, version = "34.0.0" }
 pallet-preimage = { default-features = false, version = "31.0.0" }
 pallet-ranked-collective = { default-features = false, version = "31.0.0" }
 pallet-referenda = { default-features = false, version = "31.0.0" }

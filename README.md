@@ -18,6 +18,7 @@ Note: add targets:
 ```bash
 rustup target add wasm32-unknown-unknown 
 rustup target add x86_64-unknown-linux-musl
+rustup component add rust-src --toolchain nightly-2024-03-31-x86_64-unknown-linux-gnu
 ```
 
 ## Build

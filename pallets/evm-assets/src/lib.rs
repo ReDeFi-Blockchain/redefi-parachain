@@ -28,7 +28,7 @@ use hanlde::*;
 
 mod impl_fungibles;
 pub mod migration;
-
+pub mod xcm;
 pub(crate) const LOG_TARGET: &str = "runtime::evm-assets";
 #[frame_support::pallet]
 pub mod pallet {
