@@ -117,13 +117,13 @@ contract XcmExtensions is Dummy, ERC165, ERC20 {
 	/// @dev EVM selector for this function is: 0xee18d38e,
 	///  or in textual repr: crossChainTransfer(uint64,address,uint256)
 	function crossChainTransfer(
-		uint64 chain,
-		address to,
+		uint64 chainId,
+		address receiver,
 		uint256 amount
 	) public {
 		require(false, stub_error);
-		chain;
-		to;
+		chainId;
+		receiver;
 		amount;
 		dummy = 0;
 	}

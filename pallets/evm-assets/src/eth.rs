@@ -141,13 +141,13 @@ where
 	pub fn cross_chain_transfer(
 		&mut self,
 		caller: Caller,
-		chain: ChainId,
-		to: Address,
+		chain_id: ChainId,
+		receiver: Address,
 		amount: U256,
 	) -> Result<()> {
 		let amount = amount.try_into().map_err(|_| "value overflow")?;
 		let locator = <T as Config>::ChainLocator::get();
-		let destination = locator.get(&chain).ok_or("Chain not found")?.clone();
+		let destination = locator.get(&chain_id).ok_or("Chain not found")?.clone();
 
 		if amount > <Pallet<T>>::balance(self.asset_id(), &caller) {
 			return Err(dispatch_to_evm::<T>(
@@ -176,7 +176,7 @@ where
 			0,
 			Junction::AccountKey20 {
 				network: None,
-				key: to.into(),
+				key: receiver.into(),
 			},
 		);
 
