@@ -25,7 +25,7 @@ pub(crate) fn init_bax_with<T: Config>(accounts: &[T::AccountId], owner: &T::Acc
 		});
 
 	let bx_meta = AssetMetadata::<BoundedVec<u8, T::StringLimit>> {
-		name: "redefi".as_bytes().to_vec().try_into().unwrap(),
+		name: "ReDeFi BAX".as_bytes().to_vec().try_into().unwrap(),
 		symbol: "BAX".as_bytes().to_vec().try_into().unwrap(),
 		decimals: 18,
 		is_frozen: false,
@@ -124,7 +124,7 @@ where
 	fn on_runtime_upgrade() -> Weight {
 		<Metadata<T>>::mutate(BAX_ID, |m| {
 			let Some(meta) = m else { return };
-			meta.name = b"redefi".to_vec().try_into().unwrap();
+			meta.name = b"ReDeFi BAX".to_vec().try_into().unwrap();
 		});
 		T::DbWeight::get().reads_writes(1, 1)
 	}
