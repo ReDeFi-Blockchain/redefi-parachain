@@ -1,38 +1,30 @@
 use core::marker::PhantomData;
 
-use cumulus_primitives_core::AggregateMessageOrigin;
 use frame_support::{
 	parameter_types,
-	traits::{ConstU32, Contains, Everything, Nothing, OriginTrait},
-	weights::Weight,
+	traits::{ConstU32, Contains, Everything, Nothing},
 };
 use frame_system::EnsureRoot;
-use pallet_ethereum::RawOrigin as PalletEthereumOrigin;
 use pallet_evm::account::CrossAccountId;
 use pallet_xcm::XcmPassthrough;
-use polkadot_parachain_primitives::primitives::Sibling;
-use polkadot_runtime_common::impls::ToAuthor;
-use sp_core::{Get, H160};
-use sp_runtime::{traits::TryConvert, Perbill};
+use sp_core::H160;
 use staging_xcm::latest::prelude::*;
 use staging_xcm_builder::{
 	AccountId32Aliases, AccountKey20Aliases, AllowExplicitUnpaidExecutionFrom,
 	AllowTopLevelPaidExecutionFrom, DenyReserveTransferToRelayChain, DenyThenTry, EnsureXcmOrigin,
 	FixedWeightBounds, FrameTransactionalProcessor, FungibleAdapter, FungiblesAdapter, IsConcrete,
-	NativeAsset, NoChecking, ParentIsPreset, ProcessXcmMessage, RelayChainAsNative,
-	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
+	NativeAsset, NoChecking, ParentIsPreset, RelayChainAsNative, SignedAccountId32AsNative,
 	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, TrailingSetTopicAsId,
-	UsingComponents, WithComputedOrigin, WithUniqueTopic,
+	WithComputedOrigin, WithUniqueTopic,
 };
 use staging_xcm_executor::{
 	traits::{ConvertLocation, WeightTrader},
 	AssetsInHolding, XcmExecutor,
 };
 
-use super::substrate::RuntimeBlockWeights;
 use crate::{
-	config::substrate::WeightToFee, AccountId, Address, AllPalletsWithSystem, Balances, EvmAssets,
-	ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin,
+	AccountId, AllPalletsWithSystem, Balances, EvmAssets, ParachainInfo, ParachainSystem,
+	PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin,
 };
 parameter_types! {
 	pub const RelayLocation: Location = Location::parent();
@@ -227,31 +219,9 @@ impl staging_xcm_executor::Config for XcmConfig {
 	type TransactionalProcessor = FrameTransactionalProcessor;
 }
 
-pub struct EthereumOriginToLocation<RuntimeOrigin, Network>(PhantomData<(RuntimeOrigin, Network)>)
-where
-	RuntimeOrigin: Into<Result<PalletEthereumOrigin, RuntimeOrigin>>,
-	Network: Get<Option<NetworkId>>;
-
-impl<RuntimeOrigin, Network> TryConvert<RuntimeOrigin, Location>
-	for EthereumOriginToLocation<RuntimeOrigin, Network>
-where
-	RuntimeOrigin: Into<Result<PalletEthereumOrigin, RuntimeOrigin>>,
-	Network: Get<Option<NetworkId>>,
-{
-	fn try_convert(o: RuntimeOrigin) -> Result<Location, RuntimeOrigin> {
-		o.into().map(|eo| match eo {
-			PalletEthereumOrigin::EthereumTransaction(address) => Junction::AccountKey20 {
-				network: Network::get(),
-				key: address.into(),
-			}
-			.into(),
-		})
-	}
-}
-
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
 pub type LocalOriginToLocation = (
-	EthereumOriginToLocation<RuntimeOrigin, RelayNetwork>,
+	pallet_evm_assets::xcm::EthereumOriginToLocation<RuntimeOrigin, RelayNetwork>,
 	SignedToAccountId32<RuntimeOrigin, AccountId, RelayNetwork>,
 );
 

@@ -132,11 +132,72 @@ impl<T: Config> FungibleAssetsHandle<T> {
 	}
 }
 
+#[solidity_interface(name = XcmExtensions, is(ERC20), enum(derive(PreDispatch)), enum_attr(weight))]
+impl<T: Config> FungibleAssetsHandle<T>
+where
+	<T as frame_system::Config>::RuntimeOrigin: From<EthereumOrigin>,
+{
+	#[weight(<<T as pallet_xcm::Config>::WeightInfo as PalletXcmWeightInfo>::teleport_assets() + T::DbWeight::get().reads(2_u64))]
+	pub fn cross_chain_transfer(
+		&mut self,
+		caller: Caller,
+		chain: ChainId,
+		to: Address,
+		amount: U256,
+	) -> Result<()> {
+		let amount = amount.try_into().map_err(|_| "value overflow")?;
+		let locator = <T as Config>::ChainLocator::get();
+		let destination = locator.get(&chain).ok_or("Chain not found")?.clone();
+
+		if amount > <Pallet<T>>::balance(self.asset_id(), &caller) {
+			return Err(dispatch_to_evm::<T>(
+				<Error<T>>::ERC20InsufficientBalance.into(),
+			));
+		}
+
+		match destination.unpack() {
+			(1, []) | (1, [Junction::Parachain(_)]) => Ok(()),
+			_ => Err("Unsupported Location pattern"),
+		}?;
+
+		let asset = XcmAsset {
+			id: Location::new(
+				1,
+				Junction::AccountKey20 {
+					network: None,
+					key: <Pallet<T>>::asset_id_to_address(self.asset_id()).into(),
+				},
+			)
+			.into(),
+			fun: Fungibility::Fungible(amount),
+		};
+
+		let beneficiary = Location::new(
+			0,
+			Junction::AccountKey20 {
+				network: None,
+				key: to.into(),
+			},
+		);
+
+		<PalletXcm<T>>::limited_teleport_assets(
+			EthereumOrigin::EthereumTransaction(caller).into(),
+			Box::new(destination.into()),
+			Box::new(beneficiary.into()),
+			Box::new(asset.into()),
+			0,
+			WeightLimit::Unlimited,
+		)
+		.map_err(dispatch_to_evm::<T>)
+	}
+}
+
 /// Implements [`OnMethodCall`], which delegates call to [`NativeFungibleHandle`]
 pub struct AdapterOnMethodCall<T: Config>(PhantomData<*const T>);
 impl<T: Config> OnMethodCall<T> for AdapterOnMethodCall<T>
 where
 	T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]>,
+	<T as frame_system::Config>::RuntimeOrigin: From<EthereumOrigin>,
 {
 	fn is_reserved(contract: &H160) -> bool {
 		<Pallet<T>>::address_to_asset_id(contract).is_some()
@@ -166,10 +227,15 @@ where
 
 #[solidity_interface(
 	name = NativeFungibleAssets,
-	is(ERC20, ERC20Burnable, ERC20Mintable),
+	is(ERC20, ERC20Burnable, ERC20Mintable, XcmExtensions),
 	enum(derive(PreDispatch))
 )]
-impl<T: Config> FungibleAssetsHandle<T> where T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]> {}
+impl<T: Config> FungibleAssetsHandle<T>
+where
+	T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]>,
+	<T as frame_system::Config>::RuntimeOrigin: From<EthereumOrigin>,
+{
+}
 
 generate_stubgen!(gen_impl, NativeFungibleAssetsCall<()>, true);
 generate_stubgen!(gen_iface, NativeFungibleAssetsCall<()>, false);

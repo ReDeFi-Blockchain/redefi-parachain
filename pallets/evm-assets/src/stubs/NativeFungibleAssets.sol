@@ -112,6 +112,23 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 	}
 }
 
+/// @dev the ERC-165 identifier for this interface is 0xee18d38e
+contract XcmExtensions is Dummy, ERC165, ERC20 {
+	/// @dev EVM selector for this function is: 0xee18d38e,
+	///  or in textual repr: crossChainTransfer(uint64,address,uint256)
+	function crossChainTransfer(
+		uint64 chain,
+		address to,
+		uint256 amount
+	) public {
+		require(false, stub_error);
+		chain;
+		to;
+		amount;
+		dummy = 0;
+	}
+}
+
 /// @dev the ERC-165 identifier for this interface is 0x40c10f19
 contract ERC20Mintable is Dummy, ERC165, ERC20 {
 	/// @dev EVM selector for this function is: 0x40c10f19,
@@ -144,4 +161,4 @@ contract ERC20Burnable is Dummy, ERC165, ERC20 {
 	}
 }
 
-contract NativeFungibleAssets is Dummy, ERC165, ERC20, ERC20Burnable, ERC20Mintable {}
+contract NativeFungibleAssets is Dummy, ERC165, ERC20, ERC20Burnable, ERC20Mintable, XcmExtensions {}

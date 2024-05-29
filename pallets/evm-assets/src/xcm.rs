@@ -1,6 +1,4 @@
-use staging_xcm::latest::{
-	Asset, AssetId as XcmAssetId, Fungibility, Junction, Junctions, Location,
-};
+use staging_xcm::latest::Asset;
 use staging_xcm_executor::traits::{prelude::Error as XcmError, MatchesFungibles};
 
 use crate::*;
@@ -35,5 +33,27 @@ impl<T: Config> MatchesFungibles<AssetId, Balance> for Pallet<T> {
 		}
 
 		Err(XcmError::AssetNotHandled)
+	}
+}
+
+pub struct EthereumOriginToLocation<RuntimeOrigin, Network>(PhantomData<(RuntimeOrigin, Network)>)
+where
+	RuntimeOrigin: Into<Result<EthereumOrigin, RuntimeOrigin>>,
+	Network: Get<Option<NetworkId>>;
+
+impl<RuntimeOrigin, Network> TryConvert<RuntimeOrigin, Location>
+	for EthereumOriginToLocation<RuntimeOrigin, Network>
+where
+	RuntimeOrigin: Into<Result<EthereumOrigin, RuntimeOrigin>>,
+	Network: Get<Option<NetworkId>>,
+{
+	fn try_convert(o: RuntimeOrigin) -> Result<Location, RuntimeOrigin> {
+		o.into().map(|eo| match eo {
+			EthereumOrigin::EthereumTransaction(address) => Junction::AccountKey20 {
+				network: Network::get(),
+				key: address.into(),
+			}
+			.into(),
+		})
 	}
 }

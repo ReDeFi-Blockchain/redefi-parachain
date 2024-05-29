@@ -11,11 +11,23 @@ use frame_support::{
 	},
 };
 pub use pallet::*;
+use pallet_ethereum::Origin as EthereumOrigin;
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::{types::String, SubstrateRecorder, WithRecorder};
+use pallet_xcm::{Pallet as PalletXcm, WeightInfo as PalletXcmWeightInfo};
 use sp_core::{Get, H160, U256};
-use sp_runtime::{traits::Zero, ArithmeticError};
-use sp_std::{marker::PhantomData, ops::Deref, prelude::*};
+use sp_runtime::{
+	traits::{TryConvert, Zero},
+	ArithmeticError,
+};
+use sp_std::{collections::btree_map::BTreeMap, marker::PhantomData, ops::Deref, prelude::*};
+use staging_xcm::{
+	latest::{
+		Asset as XcmAsset, AssetId as XcmAssetId, Fungibility, Junction, Junctions, Location,
+		NetworkId,
+	},
+	prelude::WeightLimit,
+};
 pub mod types;
 use types::*;
 
@@ -53,7 +65,12 @@ pub mod pallet {
 	}
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_evm_coder_substrate::Config {
+	pub trait Config:
+		frame_system::Config
+		+ pallet_evm_coder_substrate::Config
+		+ pallet_xcm::Config
+		+ pallet_ethereum::Config
+	{
 		/// Address prefix for assets evm mirrors
 		#[pallet::constant]
 		type AddressPrefix: Get<[u8; 4]>;
@@ -61,6 +78,9 @@ pub mod pallet {
 		/// The maximum length of a name or symbol stored on-chain.
 		#[pallet::constant]
 		type StringLimit: Get<u32>;
+
+		#[pallet::constant]
+		type ChainLocator: Get<BTreeMap<ChainId, Location>>;
 	}
 
 	#[pallet::storage]
