@@ -20,7 +20,7 @@ impl<T: Config> MatchesFungibles<AssetId, Balance> for Pallet<T> {
 		};
 
 		let [Junction::AccountKey20 {
-			network: _,
+			network: None,
 			key: contract_addr,
 		}] = junctions.as_ref()
 		else {
