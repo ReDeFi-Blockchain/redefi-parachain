@@ -6,7 +6,10 @@ use frame_support::{
 	ensure,
 	pallet_prelude::*,
 	traits::{
-		tokens::{fungibles, DepositConsequence, WithdrawConsequence},
+		fungibles::Unbalanced,
+		tokens::{
+			fungibles, DepositConsequence, Fortitude, Precision, Preservation, WithdrawConsequence,
+		},
 		OnRuntimeUpgrade,
 	},
 };

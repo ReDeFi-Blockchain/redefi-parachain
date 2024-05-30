@@ -88,7 +88,6 @@ pub type LocalAssetTransactor = FungibleAdapter<
 	// Use this currency when it is a fungible asset matching the given location or name:
 	IsConcrete<RelayLocation>,
 	// Do a simple punn to convert an AccountId32 Location into a native chain account ID:
-	// TODO
 	LocationToAccountId32,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
 	AccountId,

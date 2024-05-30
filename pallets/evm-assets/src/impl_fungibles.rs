@@ -1,6 +1,3 @@
-use frame_support::traits::{fungibles::Inspect, tokens::Precision::*};
-use sp_runtime::TokenError;
-
 use crate::*;
 
 impl<T: Config> fungibles::Inspect<Address> for Pallet<T> {
@@ -19,11 +16,11 @@ impl<T: Config> fungibles::Inspect<Address> for Pallet<T> {
 	}
 
 	fn total_balance(asset: Self::AssetId, who: &Address) -> Self::Balance {
-		<Pallet<T>>::balance(&asset, who)
+		Self::balance(&asset, who)
 	}
 
 	fn balance(asset: Self::AssetId, who: &Address) -> Self::Balance {
-		<Pallet<T>>::balance(&asset, who)
+		Self::balance(&asset, who)
 	}
 
 	fn reducible_balance(
@@ -32,7 +29,7 @@ impl<T: Config> fungibles::Inspect<Address> for Pallet<T> {
 		_preservation: frame_support::traits::tokens::Preservation,
 		_force: frame_support::traits::tokens::Fortitude,
 	) -> Self::Balance {
-		<Pallet<T>>::balance(&asset, who)
+		Self::balance(&asset, who)
 	}
 
 	fn can_deposit(
@@ -41,7 +38,7 @@ impl<T: Config> fungibles::Inspect<Address> for Pallet<T> {
 		amount: Self::Balance,
 		_provenance: frame_support::traits::tokens::Provenance,
 	) -> frame_support::traits::tokens::DepositConsequence {
-		<Balances<T>>::get(asset, who)
+		Self::balance(&asset, who)
 			.checked_add(amount)
 			.map(|_| DepositConsequence::Success)
 			.unwrap_or(DepositConsequence::Overflow)
@@ -52,14 +49,14 @@ impl<T: Config> fungibles::Inspect<Address> for Pallet<T> {
 		who: &Address,
 		amount: Self::Balance,
 	) -> frame_support::traits::tokens::WithdrawConsequence<Self::Balance> {
-		<Balances<T>>::get(asset, who)
+		Self::balance(&asset, who)
 			.checked_sub(amount)
 			.map(|_| WithdrawConsequence::Success)
 			.unwrap_or(WithdrawConsequence::Underflow)
 	}
 
 	fn asset_exists(asset: Self::AssetId) -> bool {
-		<Pallet<T>>::asset_exists(asset)
+		Self::asset_exists(asset)
 	}
 }
 
@@ -85,53 +82,21 @@ impl<T: Config> fungibles::Unbalanced<Address> for Pallet<T> {
 	fn decrease_balance(
 		asset: Self::AssetId,
 		who: &Address,
-		mut amount: Self::Balance,
-		precision: frame_support::traits::tokens::Precision,
-		preservation: frame_support::traits::tokens::Preservation,
-		force: frame_support::traits::tokens::Fortitude,
+		amount: Self::Balance,
+		_precision: frame_support::traits::tokens::Precision,
+		_preservation: frame_support::traits::tokens::Preservation,
+		_force: frame_support::traits::tokens::Fortitude,
 	) -> Result<Self::Balance, DispatchError> {
-		let old_balance = Self::balance(&asset, who);
-		ensure!(old_balance > 0, TokenError::FundsUnavailable);
-		let reducible = Self::reducible_balance(asset, who, preservation, force);
-		match precision {
-			BestEffort => amount = amount.min(reducible),
-			Exact => ensure!(reducible >= amount, TokenError::FundsUnavailable),
-		}
-		let new_balance = old_balance
-			.checked_sub(amount)
-			.ok_or(sp_runtime::TokenError::FundsUnavailable)?;
-		<Balances<T>>::set(asset, who, new_balance);
-
-		Ok(amount)
+		Self::burn(&asset, who, amount).map(|_| amount)
 	}
 
 	fn increase_balance(
 		asset: Self::AssetId,
 		who: &Address,
 		amount: Self::Balance,
-		precision: frame_support::traits::tokens::Precision,
+		_precision: frame_support::traits::tokens::Precision,
 	) -> Result<Self::Balance, DispatchError> {
-		let old_balance = Self::balance(&asset, who);
-		let new_balance = if let BestEffort = precision {
-			old_balance.saturating_add(amount)
-		} else {
-			old_balance
-				.checked_add(amount)
-				.ok_or(ArithmeticError::Overflow)?
-		};
-		if new_balance < Self::minimum_balance(asset) {
-			// Attempt to increase from 0 to below minimum -> stays at zero.
-			if let BestEffort = precision {
-				Ok(Self::Balance::default())
-			} else {
-				Err(sp_runtime::TokenError::BelowMinimum.into())
-			}
-		} else if new_balance == old_balance {
-			Ok(Self::Balance::default())
-		} else {
-			<Balances<T>>::set(asset, who, new_balance);
-			Ok(new_balance.saturating_sub(old_balance))
-		}
+		Self::mint(&asset, who, amount).map(|_| amount)
 	}
 }
 
@@ -141,7 +106,7 @@ impl<T: Config> fungibles::Mutate<Address> for Pallet<T> {
 		who: &Address,
 		amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError> {
-		<Pallet<T>>::mint(&asset, who, amount).map(|_| amount)
+		Self::increase_balance(asset, who, amount, Precision::Exact)
 	}
 
 	fn burn_from(
@@ -151,7 +116,14 @@ impl<T: Config> fungibles::Mutate<Address> for Pallet<T> {
 		_precision: frame_support::traits::tokens::Precision,
 		_force: frame_support::traits::tokens::Fortitude,
 	) -> Result<Self::Balance, DispatchError> {
-		<Pallet<T>>::burn(&asset, who, amount).map(|_| amount)
+		Self::decrease_balance(
+			asset,
+			who,
+			amount,
+			Precision::Exact,
+			Preservation::Protect,
+			Fortitude::Polite,
+		)
 	}
 
 	fn shelve(
@@ -159,7 +131,7 @@ impl<T: Config> fungibles::Mutate<Address> for Pallet<T> {
 		who: &Address,
 		amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError> {
-		<Pallet<T>>::burn(&asset, who, amount).map(|_| amount)
+		Self::burn(&asset, who, amount).map(|_| amount)
 	}
 
 	fn restore(
@@ -167,7 +139,7 @@ impl<T: Config> fungibles::Mutate<Address> for Pallet<T> {
 		who: &Address,
 		amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError> {
-		<Pallet<T>>::mint(&asset, who, amount).map(|_| amount)
+		Self::mint(&asset, who, amount).map(|_| amount)
 	}
 
 	fn transfer(
@@ -177,6 +149,6 @@ impl<T: Config> fungibles::Mutate<Address> for Pallet<T> {
 		amount: Self::Balance,
 		_preservation: frame_support::traits::tokens::Preservation,
 	) -> Result<Self::Balance, DispatchError> {
-		<Pallet<T>>::transfer(&asset, source, dest, amount).map(|_| amount)
+		Self::transfer(&asset, source, dest, amount).map(|_| amount)
 	}
 }

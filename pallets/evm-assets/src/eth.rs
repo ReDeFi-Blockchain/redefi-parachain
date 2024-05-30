@@ -147,7 +147,7 @@ where
 	) -> Result<()> {
 		let amount = amount.try_into().map_err(|_| "value overflow")?;
 		let locator = <T as Config>::ChainLocator::get();
-		let destination = locator.get(&chain_id).ok_or("Chain not found")?.clone();
+		let destination = locator.get(&chain_id).ok_or("chain not found")?.clone();
 
 		if amount > <Pallet<T>>::balance(self.asset_id(), &caller) {
 			return Err(dispatch_to_evm::<T>(
@@ -155,14 +155,15 @@ where
 			));
 		}
 
-		match destination.unpack() {
-			(1, []) | (1, [Junction::Parachain(_)]) => Ok(()),
-			_ => Err("Unsupported Location pattern"),
+		let parents = match destination.unpack() {
+			(1, []) | (1, [Junction::Parachain(_)]) => Ok(1),
+			(0, [Junction::Parachain(_)]) => Ok(0),
+			_ => Err("unsupported location pattern"),
 		}?;
 
 		let asset = XcmAsset {
 			id: Location::new(
-				1,
+				parents,
 				Junction::AccountKey20 {
 					network: None,
 					key: <Pallet<T>>::asset_id_to_address(self.asset_id()).into(),
@@ -180,12 +181,13 @@ where
 			},
 		);
 
+		let fee_asset_item = 0;
 		<PalletXcm<T>>::limited_teleport_assets(
 			EthereumOrigin::EthereumTransaction(caller).into(),
 			Box::new(destination.into()),
 			Box::new(beneficiary.into()),
 			Box::new(asset.into()),
-			0,
+			fee_asset_item,
 			WeightLimit::Unlimited,
 		)
 		.map_err(dispatch_to_evm::<T>)

@@ -5,8 +5,13 @@ use crate::*;
 
 impl<T: Config> MatchesFungibles<AssetId, Balance> for Pallet<T> {
 	fn matches_fungibles(a: &Asset) -> core::result::Result<(AssetId, Balance), XcmError> {
+		let relay_parent = match T::UniversalLocation::get().global_consensus() {
+			Ok(_) => 0,
+			Err(_) => 1,
+		};
 		let XcmAssetId(Location { parents, interior }) = &a.id;
-		if *parents != 1 {
+
+		if *parents != relay_parent {
 			return Err(XcmError::AssetNotHandled);
 		}
 
