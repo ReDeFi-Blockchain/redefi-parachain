@@ -83,6 +83,10 @@ impl<T: Config> fungibles::Unbalanced<Address> for Pallet<T> {
 		asset: Self::AssetId,
 		who: &Address,
 		amount: Self::Balance,
+		/*	Ignore these arguments since ERC20\EVM does not imply dust removal
+		or the privilege with which the withdrawal operation is conducted.
+		Note: This implementation is aimed at providing
+		the functionality of `TransactAsset` adapters.	*/
 		_precision: frame_support::traits::tokens::Precision,
 		_preservation: frame_support::traits::tokens::Preservation,
 		_force: frame_support::traits::tokens::Fortitude,
@@ -113,16 +117,17 @@ impl<T: Config> fungibles::Mutate<Address> for Pallet<T> {
 		asset: Self::AssetId,
 		who: &Address,
 		amount: Self::Balance,
-		_precision: frame_support::traits::tokens::Precision,
-		_force: frame_support::traits::tokens::Fortitude,
+		precision: frame_support::traits::tokens::Precision,
+		force: frame_support::traits::tokens::Fortitude,
 	) -> Result<Self::Balance, DispatchError> {
 		Self::decrease_balance(
 			asset,
 			who,
 			amount,
-			Precision::Exact,
+			precision,
+			/* No dust support - account should live */
 			Preservation::Protect,
-			Fortitude::Polite,
+			force,
 		)
 	}
 

@@ -148,13 +148,18 @@ where
 		let amount = amount.try_into().map_err(|_| "value overflow")?;
 		let locator = <T as Config>::ChainLocator::get();
 		let destination = locator.get(&chain_id).ok_or("chain not found")?.clone();
-
+		let relay_network = T::UniversalLocation::get()
+			.global_consensus()
+			.map_err(|_| "unable to get global consensus")?;
 		if amount > <Pallet<T>>::balance(self.asset_id(), &caller) {
 			return Err(dispatch_to_evm::<T>(
 				<Error<T>>::ERC20InsufficientBalance.into(),
 			));
 		}
 
+		// Determining the asset location relative to the relay.
+		// For relay - 0, for parachains - 1.
+		// Correctness is ensured by the correct configuration of the `ChainLocator`.
 		let parents = match destination.unpack() {
 			(1, []) | (1, [Junction::Parachain(_)]) => Ok(1),
 			(0, [Junction::Parachain(_)]) => Ok(0),
@@ -165,7 +170,7 @@ where
 			id: Location::new(
 				parents,
 				Junction::AccountKey20 {
-					network: None,
+					network: Some(relay_network),
 					key: <Pallet<T>>::asset_id_to_address(self.asset_id()).into(),
 				},
 			)
@@ -176,7 +181,7 @@ where
 		let beneficiary = Location::new(
 			0,
 			Junction::AccountKey20 {
-				network: None,
+				network: Some(relay_network),
 				key: receiver.into(),
 			},
 		);

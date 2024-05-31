@@ -7,9 +7,7 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{
 		fungibles::Unbalanced,
-		tokens::{
-			fungibles, DepositConsequence, Fortitude, Precision, Preservation, WithdrawConsequence,
-		},
+		tokens::{fungibles, DepositConsequence, Precision, Preservation, WithdrawConsequence},
 		OnRuntimeUpgrade,
 	},
 };
@@ -82,6 +80,9 @@ pub mod pallet {
 		#[pallet::constant]
 		type StringLimit: Get<u32>;
 
+		/// The type must contain only correct
+		/// and supported 'Location', since it is used "as is"
+		/// and its use does not imply deep checks
 		#[pallet::constant]
 		type ChainLocator: Get<BTreeMap<ChainId, Location>>;
 	}

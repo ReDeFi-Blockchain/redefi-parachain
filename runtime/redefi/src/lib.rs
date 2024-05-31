@@ -54,11 +54,13 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	state_version: 1,
 };
 
+pub(crate) const REDEFI_RELAY_GENESIS_HASH: [u8; 32] =
+	hex_literal::hex!("c54305bb26444b69a3f948914a75f77f6c0510af4f2cee2feab9943792ddf789");
+
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 	pub const SS58Prefix: u16 = 6852;
-	// FIXME
-	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
+	pub const RelayNetwork: NetworkId = NetworkId::ByGenesis(REDEFI_RELAY_GENESIS_HASH);
 }
 
 #[cfg(not(feature = "testnet-id"))]

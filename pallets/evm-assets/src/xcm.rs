@@ -5,27 +5,35 @@ use crate::*;
 
 impl<T: Config> MatchesFungibles<AssetId, Balance> for Pallet<T> {
 	fn matches_fungibles(a: &Asset) -> core::result::Result<(AssetId, Balance), XcmError> {
-		let relay_parent = match T::UniversalLocation::get().global_consensus() {
-			Ok(_) => 0,
-			Err(_) => 1,
-		};
-		let XcmAssetId(Location { parents, interior }) = &a.id;
+		let (relay_parent, relay_network_id) = match T::UniversalLocation::get().as_slice() {
+			[Junction::GlobalConsensus(network_id)] => Ok((0, *network_id)),
+			[Junction::GlobalConsensus(network_id), Junction::Parachain(_)] => Ok((1, *network_id)),
+			_ => Err(XcmError::AssetNotHandled),
+		}?;
+		let XcmAssetId(Location {
+			parents,
+			interior: asset_interior,
+		}) = &a.id;
 
 		if *parents != relay_parent {
 			return Err(XcmError::AssetNotHandled);
 		}
 
-		let Junctions::X1(junctions) = interior else {
+		let Junctions::X1(asset_junctions) = asset_interior else {
 			return Err(XcmError::AssetNotHandled);
 		};
 
 		let [Junction::AccountKey20 {
-			network: None,
+			network: Some(network_id),
 			key: contract_addr,
-		}] = junctions.as_ref()
+		}] = asset_junctions.as_ref()
 		else {
 			return Err(XcmError::AssetNotHandled);
 		};
+
+		if *network_id != relay_network_id {
+			return Err(XcmError::AssetNotHandled);
+		}
 
 		let contract_addr = Address::from_slice(contract_addr);
 		let asset = Self::address_to_asset_id(&contract_addr).ok_or(XcmError::AssetNotHandled)?;
