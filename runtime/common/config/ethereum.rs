@@ -9,8 +9,11 @@ use pallet_evm::{EVMCurrencyAdapter, EnsureAddressTruncated, HashedAddressMappin
 use scale_info::prelude::string::{String, ToString};
 use sp_core::{H160, U256};
 use sp_runtime::{traits::ConstU32, Perbill, RuntimeAppPublic};
+use sp_std::collections::btree_map::BTreeMap;
+use staging_xcm::prelude::*;
 use up_common::constants::*;
 
+use super::xcm::RelayLocation;
 use crate::{
 	runtime_common::{ethereum::precompiles::UniquePrecompiles, DealWithFees},
 	Aura, Balances, ChainId, Runtime, RuntimeEvent, DECIMALS, TOKEN_SYMBOL, VERSION,
@@ -151,8 +154,19 @@ parameter_types! {
 	pub Prefix: [u8; 4] = [0xFF, 0xFF, 0xFF, 0xFF];
 	pub StringLimit: u32 = 32;
 }
+
+#[cfg(not(feature = "testnet-id"))]
+parameter_types! {
+	pub ChainLocator: BTreeMap<u64, Location> = BTreeMap::from([(0xBABB, RelayLocation::get())]);
+}
+
+#[cfg(feature = "testnet-id")]
+parameter_types! {
+	pub ChainLocator: BTreeMap<u64, Location> = BTreeMap::from([(147803, RelayLocation::get())]);
+}
+
 impl pallet_evm_assets::Config for Runtime {
 	type AddressPrefix = Prefix;
-
 	type StringLimit = StringLimit;
+	type ChainLocator = ChainLocator;
 }
