@@ -63,7 +63,7 @@ pub(crate) const REDEFI_RELAY_CHAIN_ID: u64 = 147803;
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 	pub const SS58Prefix: u16 = 6852;
-	pub const RelayNetwork: NetworkId = NetworkId::Ethereum{ chain_id: REDEFI_RELAY_CHAIN_ID};
+	pub const RelayNetwork: NetworkId = NetworkId::Ethereum { chain_id: REDEFI_RELAY_CHAIN_ID};
 }
 
 #[cfg(not(feature = "testnet-id"))]
