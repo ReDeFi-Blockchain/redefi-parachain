@@ -98,6 +98,7 @@ impl<T: Config> fungibles::Unbalanced<Address> for Pallet<T> {
 		asset: Self::AssetId,
 		who: &Address,
 		amount: Self::Balance,
+		// see decrease_balance comment
 		_precision: frame_support::traits::tokens::Precision,
 	) -> Result<Self::Balance, DispatchError> {
 		Self::mint(&asset, who, amount).map(|_| amount)
@@ -152,6 +153,7 @@ impl<T: Config> fungibles::Mutate<Address> for Pallet<T> {
 		source: &Address,
 		dest: &Address,
 		amount: Self::Balance,
+		// see decrease_balance comment
 		_preservation: frame_support::traits::tokens::Preservation,
 	) -> Result<Self::Balance, DispatchError> {
 		Self::transfer(&asset, source, dest, amount).map(|_| amount)

@@ -54,13 +54,16 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	state_version: 1,
 };
 
-pub(crate) const REDEFI_RELAY_GENESIS_HASH: [u8; 32] =
-	hex_literal::hex!("c54305bb26444b69a3f948914a75f77f6c0510af4f2cee2feab9943792ddf789");
+#[cfg(not(feature = "testnet-id"))]
+pub(crate) const REDEFI_RELAY_CHAIN_ID: u64 = 0xBABB;
+
+#[cfg(feature = "testnet-id")]
+pub(crate) const REDEFI_RELAY_CHAIN_ID: u64 = 147803;
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 	pub const SS58Prefix: u16 = 6852;
-	pub const RelayNetwork: NetworkId = NetworkId::ByGenesis(REDEFI_RELAY_GENESIS_HASH);
+	pub const RelayNetwork: NetworkId = NetworkId::Ethereum{ chain_id: REDEFI_RELAY_CHAIN_ID};
 }
 
 #[cfg(not(feature = "testnet-id"))]
