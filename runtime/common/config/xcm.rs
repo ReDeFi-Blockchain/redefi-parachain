@@ -167,7 +167,7 @@ pub type Barrier = TrailingSetTopicAsId<
 /// queues.
 pub type XcmRouter = WithUniqueTopic<(
 	// Use UMP to communicate with the relay chain:
-	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, (), ()>,
+	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, PolkadotXcm, ()>,
 )>;
 
 pub struct FreeForAll;
