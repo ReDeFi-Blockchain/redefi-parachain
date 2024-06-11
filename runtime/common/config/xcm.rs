@@ -28,6 +28,7 @@ use crate::{
 };
 parameter_types! {
 	pub const RelayLocation: Location = Location::parent();
+	pub const Here: Location = Location::here();
 	pub RelayChainOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
 	// For the real deployment, it is recommended to set `RelayNetwork` according to the relay chain
 	// and prepend `UniversalLocation` with `GlobalConsensus(RelayNetwork::get())`.
@@ -35,7 +36,7 @@ parameter_types! {
 		[GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::parachain_id().into())].into();
 }
 
-pub struct CrossAccountLocationMapper<LocationConverter, Runtime>(
+pub struct CrossAccountLocationMapperToEvm<LocationConverter, Runtime>(
 	PhantomData<(LocationConverter, Runtime)>,
 )
 where
@@ -43,7 +44,7 @@ where
 	LocationConverter: ConvertLocation<<Runtime as frame_system::Config>::AccountId>;
 
 impl<Runtime, LocationConverter> ConvertLocation<H160>
-	for CrossAccountLocationMapper<LocationConverter, Runtime>
+	for CrossAccountLocationMapperToEvm<LocationConverter, Runtime>
 where
 	Runtime: pallet_evm::Config,
 	LocationConverter: ConvertLocation<<Runtime as frame_system::Config>::AccountId>,
@@ -55,12 +56,34 @@ where
 	}
 }
 
+pub struct CrossAccountLocationMapperToSubstrate<LocationConverter, Runtime>(
+	PhantomData<(LocationConverter, Runtime)>,
+)
+where
+	Runtime: pallet_evm::Config,
+	LocationConverter: ConvertLocation<H160>;
+
+impl<Runtime, LocationConverter> ConvertLocation<Runtime::AccountId>
+	for CrossAccountLocationMapperToSubstrate<LocationConverter, Runtime>
+where
+	Runtime: pallet_evm::Config,
+	LocationConverter: ConvertLocation<H160>,
+{
+	fn convert_location(location: &Location) -> Option<Runtime::AccountId> {
+		LocationConverter::convert_location(location).map(|account| {
+			<Runtime as pallet_evm::Config>::CrossAccountId::from_eth(account)
+				.as_sub()
+				.clone()
+		})
+	}
+}
+
 /// Type for specifying how a `Location` can be converted into an `AccountId`. This is used
 /// when determining ownership of accounts for asset transacting and when attempting to use XCM
 /// `Transact` in order to determine the dispatch Origin.
-pub type LocationToAccountId20 = (
+pub type EvmAssetsLocationToAccountId20 = (
 	// The parent (Relay-chain) origin converts to the parent `AccountId20`.
-	CrossAccountLocationMapper<ParentIsPreset<AccountId>, Runtime>,
+	CrossAccountLocationMapperToEvm<ParentIsPreset<AccountId>, Runtime>,
 	// Sibling parachain origins convert to AccountId via the `ParaId::into`.
 	// SiblingParachainConvertsVia<Sibling, AccountId>,
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
@@ -84,7 +107,7 @@ pub type LocalAssetTransactor = FungibleAdapter<
 	// Use this currency:
 	Balances,
 	// Use this currency when it is a fungible asset matching the given location or name:
-	IsConcrete<RelayLocation>,
+	IsConcrete<Here>,
 	// Do a simple punn to convert an AccountId32 Location into a native chain account ID:
 	LocationToAccountId32,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
@@ -94,7 +117,7 @@ pub type LocalAssetTransactor = FungibleAdapter<
 >;
 
 pub type EvmAssetsTransactor =
-	FungiblesAdapter<EvmAssets, EvmAssets, LocationToAccountId20, H160, NoChecking, ()>;
+	FungiblesAdapter<EvmAssets, EvmAssets, EvmAssetsLocationToAccountId20, H160, NoChecking, ()>;
 
 pub type AssetTransactor = (EvmAssetsTransactor, LocalAssetTransactor);
 
