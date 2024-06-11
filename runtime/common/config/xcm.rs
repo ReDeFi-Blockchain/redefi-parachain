@@ -79,8 +79,6 @@ pub type LocationToAccountId32 = (
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
 
-pub type LocationToAccountId = (LocationToAccountId20, LocationToAccountId32);
-
 /// Means for transacting assets on this chain.
 pub type LocalAssetTransactor = FungibleAdapter<
 	// Use this currency:
