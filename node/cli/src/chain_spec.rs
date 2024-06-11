@@ -119,7 +119,7 @@ macro_rules! testnet_genesis {
 					.collect::<Vec<_>>()
 			},
 			"evmAssets": {
-				"accounts": $endowed_accounts,
+				"accounts": [$root_key],
 			},
 			"parachainInfo": {
 				"parachainId": $id,

@@ -7,7 +7,7 @@ use frame_support::{
 use frame_system::EnsureRoot;
 use pallet_evm::account::CrossAccountId;
 use pallet_xcm::XcmPassthrough;
-use sp_core::H160;
+use sp_core::{TypedGet, H160};
 use staging_xcm::latest::prelude::*;
 use staging_xcm_builder::{
 	AccountId32Aliases, AccountKey20Aliases, AllowExplicitUnpaidExecutionFrom,
@@ -22,13 +22,15 @@ use staging_xcm_executor::{
 	AssetsInHolding, XcmExecutor,
 };
 
+use super::ethereum::AdapterContractAddress;
 use crate::{
-	AccountId, AllPalletsWithSystem, Balances, EvmAssets, ParachainInfo, ParachainSystem,
-	PolkadotXcm, RelayNetwork, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin,
+	AccountId, AllPalletsWithSystem, Balances, BalancesAdapter, EvmAssets, ParachainInfo,
+	ParachainSystem, PolkadotXcm, RelayNetwork, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin,
 };
 parameter_types! {
 	pub const RelayLocation: Location = Location::parent();
 	pub const Here: Location = Location::here();
+	pub NativeAssetXcmEvmLocation: Location = Location::new(1, Junction::AccountKey20 { network: Some(RelayNetwork::get()), key: AdapterContractAddress::get().into() });
 	pub RelayChainOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
 	// For the real deployment, it is recommended to set `RelayNetwork` according to the relay chain
 	// and prepend `UniversalLocation` with `GlobalConsensus(RelayNetwork::get())`.
@@ -116,10 +118,27 @@ pub type LocalAssetTransactor = FungibleAdapter<
 	(),
 >;
 
+pub type EvmLocalAssetTransactor = FungibleAdapter<
+	// Use this currency:
+	BalancesAdapter,
+	// Use this currency when it is a fungible asset matching the given location or name:
+	IsConcrete<NativeAssetXcmEvmLocation>,
+	// Do a simple punn to convert an AccountId32 Location into a native chain account ID:
+	EvmAssetsLocationToAccountId20,
+	// Our chain's account ID type (we can't get away without mentioning it explicitly):
+	H160,
+	// We don't track any teleports.
+	(),
+>;
+
 pub type EvmAssetsTransactor =
 	FungiblesAdapter<EvmAssets, EvmAssets, EvmAssetsLocationToAccountId20, H160, NoChecking, ()>;
 
-pub type AssetTransactor = (EvmAssetsTransactor, LocalAssetTransactor);
+pub type AssetTransactor = (
+	EvmLocalAssetTransactor,
+	EvmAssetsTransactor,
+	LocalAssetTransactor,
+);
 
 /// This is the type we use to convert an (incoming) XCM origin into a local `Origin` instance,
 /// ready for dispatching a transaction with Xcm's `Transact`. There is an `OriginKind` which can

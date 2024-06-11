@@ -6,7 +6,10 @@ use core::ops::Deref;
 use evm_coder::{types::*, ToLog};
 use frame_support::{
 	pallet_prelude::*,
-	traits::tokens::fungible::{Inspect, Mutate},
+	traits::{
+		fungible::{Dust, Unbalanced},
+		tokens::fungible::{Inspect, Mutate},
+	},
 };
 pub use pallet::*;
 use pallet_balances::WeightInfo;
@@ -16,6 +19,7 @@ use sp_core::{H160, U256};
 pub mod eth;
 pub mod handle;
 use handle::*;
+pub mod impl_fungible;
 
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
@@ -26,7 +30,10 @@ pub mod pallet {
 	use frame_support::{
 		ensure,
 		storage::Key,
-		traits::{tokens::Preservation, Get},
+		traits::{
+			tokens::{Balance, Preservation},
+			Get,
+		},
 	};
 
 	use super::*;
@@ -53,7 +60,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + pallet_evm_coder_substrate::Config {
 		type Balances: Mutate<Self::AccountId, Balance = Self::NativeBalance>;
 
-		type NativeBalance: Into<U256> + TryFrom<U256> + TryFrom<u128> + Into<u128>;
+		type NativeBalance: Balance + Into<U256> + TryFrom<U256> + From<u128> + Into<u128>;
 
 		/// Address, under which magic contract will be available
 		#[pallet::constant]
@@ -176,7 +183,6 @@ pub mod pallet {
 		///
 		/// Same as the [`Self::transfer`] but the spender doesn't needs to be the direct owner of the token.
 		/// The spender must be allowed to transfer token.
-		/// If the tokens are nested in an NFT and the spender owns the NFT, the allowance is considered to be set.
 		///
 		/// - `spender`: Account that spend the money.
 		/// - `from`: Owner of tokens to transfer.
