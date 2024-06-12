@@ -8,7 +8,7 @@ impl<T: Config> Inspect<H160> for Pallet<T> {
 	}
 
 	fn minimum_balance() -> Self::Balance {
-		T::Balances::total_issuance()
+		T::Balances::minimum_balance()
 	}
 
 	fn total_balance(who: &H160) -> Self::Balance {
