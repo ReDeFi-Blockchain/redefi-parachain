@@ -204,20 +204,26 @@ where
 
 #[solidity_interface(name = PermissionsExtensions, is(ERC20), enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> FungibleAssetsHandle<T> {
-	fn add_admin(&mut self, caller: Caller, account: Address) -> Result<()> {
-		self.consume_store_reads(2)?;
+	/// Change admin permissions or remove it if all permissions is set to zero.
+	///
+	/// Permissions bits.
+	///
+	/// 1 bit: allow admin to mint new tokens.
+	/// 2 - 8 bits: reserved.
+	fn control_admin_permissions(
+		&mut self,
+		caller: Caller,
+		account: Address,
+		permissions: u8,
+	) -> Result<()> {
+		self.consume_store_reads(1)?;
 		self.consume_store_writes(1)?;
 
 		<Pallet<T>>::check_owner(self.asset_id(), &caller).map_err(dispatch_to_evm::<T>)?;
-		<Pallet<T>>::add_admin(self.asset_id(), &account).map_err(dispatch_to_evm::<T>)
-	}
 
-	fn remove_admin(&mut self, caller: Caller, account: Address) -> Result<()> {
-		self.consume_store_reads(2)?;
-		self.consume_store_writes(1)?;
-
-		<Pallet<T>>::check_owner(self.asset_id(), &caller).map_err(dispatch_to_evm::<T>)?;
-		<Pallet<T>>::remove_admin(self.asset_id(), &account).map_err(dispatch_to_evm::<T>)
+		let permissions = AdmninistratorPermissions::from_bits_truncate(permissions);
+		<Pallet<T>>::control_admin_permissions(self.asset_id(), &account, permissions)
+			.map_err(dispatch_to_evm::<T>)
 	}
 }
 

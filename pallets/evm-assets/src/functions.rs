@@ -186,24 +186,17 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub fn add_admin(asset: &AssetId, account: &Address) -> DispatchResult {
-		ensure!(
-			!<Admins<T>>::contains_key(asset, account),
-			<Error<T>>::AlreadyAdmin,
-		);
-
-		<Admins<T>>::insert(asset, account, AdmninistratorPermissions::MINT);
-
-		Ok(())
-	}
-
-	pub fn remove_admin(asset: &AssetId, account: &Address) -> DispatchResult {
-		ensure!(
-			<Admins<T>>::contains_key(asset, account),
-			<Error<T>>::AlreadyAdmin,
-		);
-
-		<Admins<T>>::remove(asset, account);
+	pub fn control_admin_permissions(
+		asset: &AssetId,
+		account: &Address,
+		permissions: AdmninistratorPermissions,
+	) -> DispatchResult {
+		if permissions.is_empty() {
+			// FIXME: Should we return an error if account does not exists in admin storage?
+			<Admins<T>>::remove(asset, account);
+		} else {
+			<Admins<T>>::insert(asset, account, permissions);
+		}
 
 		Ok(())
 	}
