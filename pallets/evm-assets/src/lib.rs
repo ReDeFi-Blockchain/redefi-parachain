@@ -63,6 +63,7 @@ pub mod pallet {
 		ERC20InsufficientBalance,
 		OwnableUnauthorizedAccount,
 		UnauthorizedAccount,
+		AlreadyAdmin,
 		AssetNotFound,
 	}
 

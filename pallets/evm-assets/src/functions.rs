@@ -186,6 +186,28 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	pub fn add_admin(asset: &AssetId, account: &Address) -> DispatchResult {
+		ensure!(
+			!<Admins<T>>::contains_key(asset, account),
+			<Error<T>>::AlreadyAdmin,
+		);
+
+		<Admins<T>>::insert(asset, account, AdmninistratorPermissions::MINT);
+
+		Ok(())
+	}
+
+	pub fn remove_admin(asset: &AssetId, account: &Address) -> DispatchResult {
+		ensure!(
+			<Admins<T>>::contains_key(asset, account),
+			<Error<T>>::AlreadyAdmin,
+		);
+
+		<Admins<T>>::remove(asset, account);
+
+		Ok(())
+	}
+
 	pub fn check_mint_permissions(asset: &AssetId, account: &Address) -> DispatchResult {
 		let asset_details = <Asset<T>>::get(asset).ok_or(<Error<T>>::AssetNotFound)?;
 		if &asset_details.owner == account {

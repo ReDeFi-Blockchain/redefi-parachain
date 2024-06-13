@@ -8,7 +8,6 @@ contract Dummy {
 	uint8 dummy;
 	string stub_error = "this contract is implemented in native";
 }
-
 contract ERC165 is Dummy {
 	function supportsInterface(bytes4 interfaceID) external view returns (bool) {
 		require(false, stub_error);
@@ -34,7 +33,6 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy;
 		return 0;
 	}
-
 	/// @dev EVM selector for this function is: 0x095ea7b3,
 	///  or in textual repr: approve(address,uint256)
 	function approve(address spender, uint256 amount) public returns (bool) {
@@ -44,7 +42,6 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy = 0;
 		return false;
 	}
-
 	/// @dev EVM selector for this function is: 0x70a08231,
 	///  or in textual repr: balanceOf(address)
 	function balanceOf(address owner) public view returns (uint256) {
@@ -53,7 +50,6 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy;
 		return 0;
 	}
-
 	/// @dev EVM selector for this function is: 0x313ce567,
 	///  or in textual repr: decimals()
 	function decimals() public view returns (uint8) {
@@ -61,7 +57,6 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy;
 		return 0;
 	}
-
 	/// @dev EVM selector for this function is: 0x06fdde03,
 	///  or in textual repr: name()
 	function name() public view returns (string memory) {
@@ -69,7 +64,6 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy;
 		return "";
 	}
-
 	/// @dev EVM selector for this function is: 0x95d89b41,
 	///  or in textual repr: symbol()
 	function symbol() public view returns (string memory) {
@@ -77,7 +71,6 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy;
 		return "";
 	}
-
 	/// @dev EVM selector for this function is: 0x18160ddd,
 	///  or in textual repr: totalSupply()
 	function totalSupply() public view returns (uint256) {
@@ -85,7 +78,6 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy;
 		return 0;
 	}
-
 	/// @dev EVM selector for this function is: 0xa9059cbb,
 	///  or in textual repr: transfer(address,uint256)
 	function transfer(address to, uint256 amount) public returns (bool) {
@@ -95,14 +87,9 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy = 0;
 		return false;
 	}
-
 	/// @dev EVM selector for this function is: 0x23b872dd,
 	///  or in textual repr: transferFrom(address,address,uint256)
-	function transferFrom(
-		address from,
-		address to,
-		uint256 amount
-	) public returns (bool) {
+	function transferFrom(address from, address to, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		from;
 		to;
@@ -112,15 +99,29 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 	}
 }
 
+/// @dev the ERC-165 identifier for this interface is 0x67cdf749
+contract PermissionsExtensions is Dummy, ERC165, ERC20 {
+	/// @dev EVM selector for this function is: 0x70480275,
+	///  or in textual repr: addAdmin(address)
+	function addAdmin(address account) public {
+		require(false, stub_error);
+		account;
+		dummy = 0;
+	}
+	/// @dev EVM selector for this function is: 0x1785f53c,
+	///  or in textual repr: removeAdmin(address)
+	function removeAdmin(address account) public {
+		require(false, stub_error);
+		account;
+		dummy = 0;
+	}
+}
+
 /// @dev the ERC-165 identifier for this interface is 0xee18d38e
 contract XcmExtensions is Dummy, ERC165, ERC20 {
 	/// @dev EVM selector for this function is: 0xee18d38e,
 	///  or in textual repr: crossChainTransfer(uint64,address,uint256)
-	function crossChainTransfer(
-		uint64 chainId,
-		address receiver,
-		uint256 amount
-	) public {
+	function crossChainTransfer(uint64 chainId, address receiver, uint256 amount) public {
 		require(false, stub_error);
 		chainId;
 		receiver;
@@ -150,7 +151,6 @@ contract ERC20Burnable is Dummy, ERC165, ERC20 {
 		value;
 		dummy = 0;
 	}
-
 	/// @dev EVM selector for this function is: 0x79cc6790,
 	///  or in textual repr: burnFrom(address,uint256)
 	function burnFrom(address account, uint256 value) public {
@@ -161,4 +161,6 @@ contract ERC20Burnable is Dummy, ERC165, ERC20 {
 	}
 }
 
-contract NativeFungibleAssets is Dummy, ERC165, ERC20, ERC20Burnable, ERC20Mintable, XcmExtensions {}
+contract NativeFungibleAssets is Dummy, ERC165, ERC20, ERC20Burnable, ERC20Mintable, XcmExtensions, PermissionsExtensions {
+}
+

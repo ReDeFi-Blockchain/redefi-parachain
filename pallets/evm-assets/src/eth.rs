@@ -202,6 +202,25 @@ where
 	}
 }
 
+#[solidity_interface(name = PermissionsExtensions, is(ERC20), enum(derive(PreDispatch)), enum_attr(weight))]
+impl<T: Config> FungibleAssetsHandle<T> {
+	fn add_admin(&mut self, caller: Caller, account: Address) -> Result<()> {
+		self.consume_store_reads(2)?;
+		self.consume_store_writes(1)?;
+
+		<Pallet<T>>::check_owner(self.asset_id(), &caller).map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::add_admin(self.asset_id(), &account).map_err(dispatch_to_evm::<T>)
+	}
+
+	fn remove_admin(&mut self, caller: Caller, account: Address) -> Result<()> {
+		self.consume_store_reads(2)?;
+		self.consume_store_writes(1)?;
+
+		<Pallet<T>>::check_owner(self.asset_id(), &caller).map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::remove_admin(self.asset_id(), &account).map_err(dispatch_to_evm::<T>)
+	}
+}
+
 /// Implements [`OnMethodCall`], which delegates call to [`NativeFungibleHandle`]
 pub struct AdapterOnMethodCall<T: Config>(PhantomData<*const T>);
 impl<T: Config> OnMethodCall<T> for AdapterOnMethodCall<T>
@@ -237,7 +256,7 @@ where
 
 #[solidity_interface(
 	name = NativeFungibleAssets,
-	is(ERC20, ERC20Burnable, ERC20Mintable, XcmExtensions),
+	is(ERC20, ERC20Burnable, ERC20Mintable, XcmExtensions, PermissionsExtensions),
 	enum(derive(PreDispatch))
 )]
 impl<T: Config> FungibleAssetsHandle<T>
