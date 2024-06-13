@@ -64,9 +64,9 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
-	/// Supported assets.
+	/// Permissions of an administrator.
 	#[derive(Encode, Decode, MaxEncodedLen, Default, TypeInfo)]
 	pub struct AdmninistratorPermissions: u8 {
-	// TODO
+		const MINT = 1;
 	}
 }

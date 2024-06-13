@@ -124,9 +124,12 @@ impl<T: Config> FungibleAssetsHandle<T> {
 #[solidity_interface(name = ERC20Mintable, is(ERC20), enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> FungibleAssetsHandle<T> {
 	pub fn mint(&mut self, caller: Caller, to: Address, amount: U256) -> Result<()> {
-		self.consume_store_reads(2)?;
+		self.consume_store_reads(3)?;
 		self.consume_store_writes(2)?;
-		<Pallet<T>>::check_owner(self.asset_id(), &caller).map_err(dispatch_to_evm::<T>)?;
+
+		<Pallet<T>>::check_mint_permissions(self.asset_id(), &caller)
+			.map_err(dispatch_to_evm::<T>)?;
+
 		let amount = amount.try_into().map_err(|_| "value overflow")?;
 		<Pallet<T>>::mint(self.asset_id(), &to, amount).map_err(dispatch_to_evm::<T>)
 	}
