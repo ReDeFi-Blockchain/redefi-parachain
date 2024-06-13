@@ -13,15 +13,23 @@ use frame_support::{
 };
 pub use pallet::*;
 use pallet_balances::WeightInfo;
+use pallet_ethereum::Origin as EthereumOrigin;
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
+use pallet_xcm::{Pallet as PalletXcm, WeightInfo as PalletXcmWeightInfo};
 use sp_core::{H160, U256};
+use sp_std::{boxed::Box, collections::btree_map::BTreeMap};
+use staging_xcm::{
+	latest::{Asset as XcmAsset, Fungibility, Junction, Location},
+	prelude::WeightLimit,
+};
 pub mod eth;
 pub mod handle;
 use handle::*;
-pub mod impl_fungible;
+mod impl_fungible;
 
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
+pub(crate) type ChainId = u64;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -40,10 +48,14 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		// TODO Add more info.
-		/// Indicates a failure with the `spender`’s `allowance`. Used in transfers.
 		ERC20InsufficientAllowance,
 		ERC20InvalidReceiver,
+		ERC20InvalidApprover,
+		ERC20InvalidSender,
+		Erc20InvalidSpender,
+		ERC20InsufficientBalance,
+		OwnableUnauthorizedAccount,
+		AssetNotFound,
 	}
 
 	#[pallet::storage]
@@ -57,7 +69,9 @@ pub mod pallet {
 	>;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_evm_coder_substrate::Config {
+	pub trait Config:
+		frame_system::Config + pallet_evm_coder_substrate::Config + pallet_xcm::Config
+	{
 		type Balances: Mutate<Self::AccountId, Balance = Self::NativeBalance>;
 
 		type NativeBalance: Balance + Into<U256> + TryFrom<U256> + From<u128> + Into<u128>;
@@ -74,6 +88,12 @@ pub mod pallet {
 
 		/// Collection symbol
 		type Symbol: Get<String>;
+
+		/// The type must contain only correct
+		/// and supported 'Location', since it is used "as is"
+		/// and its use does not imply deep checks
+		#[pallet::constant]
+		type ChainLocator: Get<BTreeMap<ChainId, Location>>;
 
 		/// Weight information
 		type WeightInfo: WeightInfo;
@@ -156,9 +176,7 @@ pub mod pallet {
 			Self::check_receiver(to)?;
 
 			{
-				let amount = amount
-					.try_into()
-					.map_err(|_| sp_runtime::ArithmeticError::Overflow)?;
+				let amount = amount.into();
 				T::Balances::transfer(
 					from.as_sub(),
 					to.as_sub(),
