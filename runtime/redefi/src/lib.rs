@@ -47,18 +47,23 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("redefi"),
 	impl_name: create_runtime_str!("redefi"),
 	authoring_version: 1,
-	spec_version: 1_009_0_015,
+	spec_version: 1_009_0_020,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
 	state_version: 1,
 };
 
+#[cfg(not(feature = "testnet-id"))]
+pub(crate) const REDEFI_RELAY_CHAIN_ID: u64 = 0xBABB;
+
+#[cfg(feature = "testnet-id")]
+pub(crate) const REDEFI_RELAY_CHAIN_ID: u64 = 147803;
+
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 	pub const SS58Prefix: u16 = 6852;
-	// FIXME
-	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
+	pub const RelayNetwork: NetworkId = NetworkId::Ethereum { chain_id: REDEFI_RELAY_CHAIN_ID };
 }
 
 #[cfg(not(feature = "testnet-id"))]

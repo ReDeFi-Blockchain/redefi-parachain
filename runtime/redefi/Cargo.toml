@@ -19,6 +19,7 @@ targets = ['x86_64-unknown-linux-gnu']
 default = ['redefi-runtime', 'std']
 redefi-runtime = []
 runtime-benchmarks = [
+	"pallet-message-queue/runtime-benchmarks",
 	"pallet-preimage/runtime-benchmarks",
 	'cumulus-pallet-parachain-system/runtime-benchmarks',
 	'frame-benchmarking',
@@ -37,8 +38,10 @@ runtime-benchmarks = [
 std = [
 	"pallet-authorship/std",
 	"pallet-evm-assets/std",
+	"pallet-message-queue/std",
 	"pallet-preimage/std",
 	"pallet-session/std",
+	"pallet-xcm/std",
 	"sp-consensus-aura/std",
 	'cumulus-pallet-aura-ext/std',
 	'cumulus-pallet-parachain-system/std',
@@ -97,6 +100,7 @@ testnet-id = []
 
 try-runtime = [
 	"pallet-authorship/try-runtime",
+	"pallet-message-queue/try-runtime",
 	"pallet-preimage/try-runtime",
 	"pallet-session/try-runtime",
 	'cumulus-pallet-aura-ext/try-runtime',
@@ -147,6 +151,7 @@ frame-system-rpc-runtime-api = { workspace = true }
 pallet-aura = { workspace = true }
 pallet-authorship = { workspace = true }
 pallet-balances = { features = ["insecure_zero_ed"], workspace = true }
+pallet-message-queue = { workspace = true }
 pallet-preimage = { workspace = true }
 pallet-session = { workspace = true }
 pallet-sudo = { workspace = true }

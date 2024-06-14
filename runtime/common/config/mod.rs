@@ -17,3 +17,4 @@
 pub mod ethereum;
 pub mod parachain;
 pub mod substrate;
+pub mod xcm;

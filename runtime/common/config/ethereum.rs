@@ -9,8 +9,11 @@ use pallet_evm::{EVMCurrencyAdapter, EnsureAddressTruncated, HashedAddressMappin
 use scale_info::prelude::string::{String, ToString};
 use sp_core::{H160, U256};
 use sp_runtime::{traits::ConstU32, Perbill, RuntimeAppPublic};
+use sp_std::collections::btree_map::BTreeMap;
+use staging_xcm::prelude::*;
 use up_common::constants::*;
 
+use super::xcm::RelayLocation;
 use crate::{
 	runtime_common::{ethereum::precompiles::UniquePrecompiles, DealWithFees},
 	Aura, Balances, ChainId, Runtime, RuntimeEvent, DECIMALS, TOKEN_SYMBOL, VERSION,
@@ -137,6 +140,17 @@ parameter_types! {
 		0xFF, 0xFF, 0xFF, 0xFF, 0xBA, 0xBB, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	]);
 }
+
+#[cfg(not(feature = "testnet-id"))]
+parameter_types! {
+	pub ChainLocator: BTreeMap<u64, Location> = BTreeMap::from([(0xBABB, RelayLocation::get())]);
+}
+
+#[cfg(feature = "testnet-id")]
+parameter_types! {
+	pub ChainLocator: BTreeMap<u64, Location> = BTreeMap::from([(147803, RelayLocation::get())]);
+}
+
 impl pallet_balances_adapter::Config for Runtime {
 	type Balances = Balances;
 	type NativeBalance = up_common::types::Balance;
@@ -145,14 +159,16 @@ impl pallet_balances_adapter::Config for Runtime {
 	type Name = Name;
 	type Symbol = Symbol;
 	type WeightInfo = pallet_balances::weights::SubstrateWeight<Self>;
+	type ChainLocator = ChainLocator;
 }
 
 parameter_types! {
 	pub Prefix: [u8; 4] = [0xFF, 0xFF, 0xFF, 0xFF];
 	pub StringLimit: u32 = 32;
 }
+
 impl pallet_evm_assets::Config for Runtime {
 	type AddressPrefix = Prefix;
-
 	type StringLimit = StringLimit;
+	type ChainLocator = ChainLocator;
 }

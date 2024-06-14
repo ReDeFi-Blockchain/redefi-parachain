@@ -6480,13 +6480,17 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-balances",
+ "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-coder-substrate",
+ "pallet-xcm",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-runtime",
  "sp-std",
+ "staging-xcm",
+ "staging-xcm-executor",
 ]
 
 [[package]]
@@ -6782,14 +6786,18 @@ dependencies = [
  "hex-literal",
  "log",
  "pallet-balances",
+ "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-coder-substrate",
+ "pallet-xcm",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "staging-xcm",
+ "staging-xcm-executor",
 ]
 
 [[package]]
@@ -9835,6 +9843,7 @@ dependencies = [
  "pallet-evm-coder-substrate",
  "pallet-evm-contract-helpers",
  "pallet-evm-precompile-simple",
+ "pallet-message-queue",
  "pallet-preimage",
  "pallet-session",
  "pallet-sudo",
