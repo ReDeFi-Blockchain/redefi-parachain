@@ -99,17 +99,17 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 	}
 }
 
-/// @dev the ERC-165 identifier for this interface is 0x048f523f
+/// @dev the ERC-165 identifier for this interface is 0xd901570d
 contract PermissionsExtensions is Dummy, ERC165, ERC20 {
-	/// Change admin permissions or remove it if all permissions is set to zero.
+	/// Change account permissions.
 	///
 	/// Permissions bits.
 	///
-	/// 1 bit: allow admin to mint new tokens.
+	/// 1 bit: allow account to mint new tokens.
 	/// 2 - 8 bits: reserved.
-	/// @dev EVM selector for this function is: 0x048f523f,
-	///  or in textual repr: controlAdminPermissions(address,uint8)
-	function controlAdminPermissions(address account, uint8 permissions) public {
+	/// @dev EVM selector for this function is: 0xd901570d,
+	///  or in textual repr: setAccountPermissions(address,uint64)
+	function setAccountPermissions(address account, uint64 permissions) public {
 		require(false, stub_error);
 		account;
 		permissions;

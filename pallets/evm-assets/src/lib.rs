@@ -63,7 +63,6 @@ pub mod pallet {
 		ERC20InsufficientBalance,
 		OwnableUnauthorizedAccount,
 		UnauthorizedAccount,
-		AlreadyAdmin,
 		AssetNotFound,
 	}
 
@@ -107,13 +106,13 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	pub(super) type Admins<T: Config> = StorageDoubleMap<
+	pub(super) type Permissions<T: Config> = StorageDoubleMap<
 		_,
 		Twox64Concat,
 		AssetId,
 		Twox64Concat,
 		Address,
-		AdmninistratorPermissions,
+		AccountPermissions,
 		ValueQuery,
 	>;
 

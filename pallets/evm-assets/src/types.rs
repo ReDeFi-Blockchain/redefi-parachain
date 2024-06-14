@@ -64,9 +64,9 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
-	/// Permissions of an administrator.
+	/// Permissions of an account.
 	#[derive(Encode, Decode, MaxEncodedLen, Default, TypeInfo)]
-	pub struct AdmninistratorPermissions: u8 {
+	pub struct AccountPermissions: u64 {
 		const MINT = 1;
 	}
 }

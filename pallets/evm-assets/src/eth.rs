@@ -127,7 +127,7 @@ impl<T: Config> FungibleAssetsHandle<T> {
 		self.consume_store_reads(3)?;
 		self.consume_store_writes(2)?;
 
-		<Pallet<T>>::check_mint_permissions(self.asset_id(), &caller)
+		<Pallet<T>>::check_account_permissions(self.asset_id(), &caller, AccountPermissions::MINT)
 			.map_err(dispatch_to_evm::<T>)?;
 
 		let amount = amount.try_into().map_err(|_| "value overflow")?;
@@ -204,25 +204,25 @@ where
 
 #[solidity_interface(name = PermissionsExtensions, is(ERC20), enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> FungibleAssetsHandle<T> {
-	/// Change admin permissions or remove it if all permissions is set to zero.
+	/// Change account permissions.
 	///
 	/// Permissions bits.
 	///
-	/// 1 bit: allow admin to mint new tokens.
+	/// 1 bit: allow account to mint new tokens.
 	/// 2 - 8 bits: reserved.
-	fn control_admin_permissions(
+	fn set_account_permissions(
 		&mut self,
 		caller: Caller,
 		account: Address,
-		permissions: u8,
+		permissions: u64,
 	) -> Result<()> {
 		self.consume_store_reads(1)?;
 		self.consume_store_writes(1)?;
 
 		<Pallet<T>>::check_owner(self.asset_id(), &caller).map_err(dispatch_to_evm::<T>)?;
 
-		let permissions = AdmninistratorPermissions::from_bits_truncate(permissions);
-		<Pallet<T>>::control_admin_permissions(self.asset_id(), &account, permissions)
+		let permissions = AccountPermissions::from_bits_truncate(permissions);
+		<Pallet<T>>::set_account_permissions(self.asset_id(), &account, permissions)
 			.map_err(dispatch_to_evm::<T>)
 	}
 }

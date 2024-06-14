@@ -186,31 +186,34 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub fn control_admin_permissions(
+	pub fn set_account_permissions(
 		asset: &AssetId,
 		account: &Address,
-		permissions: AdmninistratorPermissions,
+		permissions: AccountPermissions,
 	) -> DispatchResult {
 		if permissions.is_empty() {
-			// FIXME: Should we return an error if account does not exists in admin storage?
-			<Admins<T>>::remove(asset, account);
+			<Permissions<T>>::remove(asset, account);
 		} else {
-			<Admins<T>>::insert(asset, account, permissions);
+			<Permissions<T>>::insert(asset, account, permissions);
 		}
 
 		Ok(())
 	}
 
-	pub fn check_mint_permissions(asset: &AssetId, account: &Address) -> DispatchResult {
+	pub fn check_account_permissions(
+		asset: &AssetId,
+		account: &Address,
+		permissions: AccountPermissions,
+	) -> DispatchResult {
 		let asset_details = <Asset<T>>::get(asset).ok_or(<Error<T>>::AssetNotFound)?;
 		if &asset_details.owner == account {
 			return Ok(());
 		}
 
-		let admin_permissions =
-			<Admins<T>>::try_get(asset, account).map_err(|_| <Error<T>>::UnauthorizedAccount)?;
+		let account_permissions = <Permissions<T>>::try_get(asset, account)
+			.map_err(|_| <Error<T>>::UnauthorizedAccount)?;
 
-		if admin_permissions.contains(AdmninistratorPermissions::MINT) {
+		if account_permissions.contains(permissions) {
 			Ok(())
 		} else {
 			Err(<Error<T>>::UnauthorizedAccount.into())
