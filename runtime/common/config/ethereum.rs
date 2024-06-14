@@ -140,20 +140,6 @@ parameter_types! {
 		0xFF, 0xFF, 0xFF, 0xFF, 0xBA, 0xBB, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	]);
 }
-impl pallet_balances_adapter::Config for Runtime {
-	type Balances = Balances;
-	type NativeBalance = up_common::types::Balance;
-	type ContractAddress = AdapterContractAddress;
-	type Decimals = Decimals;
-	type Name = Name;
-	type Symbol = Symbol;
-	type WeightInfo = pallet_balances::weights::SubstrateWeight<Self>;
-}
-
-parameter_types! {
-	pub Prefix: [u8; 4] = [0xFF, 0xFF, 0xFF, 0xFF];
-	pub StringLimit: u32 = 32;
-}
 
 #[cfg(not(feature = "testnet-id"))]
 parameter_types! {
@@ -163,6 +149,22 @@ parameter_types! {
 #[cfg(feature = "testnet-id")]
 parameter_types! {
 	pub ChainLocator: BTreeMap<u64, Location> = BTreeMap::from([(147803, RelayLocation::get())]);
+}
+
+impl pallet_balances_adapter::Config for Runtime {
+	type Balances = Balances;
+	type NativeBalance = up_common::types::Balance;
+	type ContractAddress = AdapterContractAddress;
+	type Decimals = Decimals;
+	type Name = Name;
+	type Symbol = Symbol;
+	type WeightInfo = pallet_balances::weights::SubstrateWeight<Self>;
+	type ChainLocator = ChainLocator;
+}
+
+parameter_types! {
+	pub Prefix: [u8; 4] = [0xFF, 0xFF, 0xFF, 0xFF];
+	pub StringLimit: u32 = 32;
 }
 
 impl pallet_evm_assets::Config for Runtime {
