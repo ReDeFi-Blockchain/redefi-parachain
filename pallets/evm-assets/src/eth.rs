@@ -222,8 +222,9 @@ impl<T: Config> FungibleAssetsHandle<T> {
 		<Pallet<T>>::check_owner(self.asset_id(), &caller).map_err(dispatch_to_evm::<T>)?;
 
 		let permissions = AccountPermissions::from_bits_truncate(permissions);
-		<Pallet<T>>::set_account_permissions(self.asset_id(), &account, permissions)
-			.map_err(dispatch_to_evm::<T>)
+		<Pallet<T>>::set_account_permissions(self.asset_id(), &account, permissions);
+
+		Ok(())
 	}
 }
 

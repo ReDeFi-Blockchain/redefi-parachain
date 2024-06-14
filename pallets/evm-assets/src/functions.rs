@@ -190,14 +190,12 @@ impl<T: Config> Pallet<T> {
 		asset: &AssetId,
 		account: &Address,
 		permissions: AccountPermissions,
-	) -> DispatchResult {
+	) {
 		if permissions.is_empty() {
 			<Permissions<T>>::remove(asset, account);
 		} else {
 			<Permissions<T>>::insert(asset, account, permissions);
 		}
-
-		Ok(())
 	}
 
 	pub fn check_account_permissions(
