@@ -101,6 +101,48 @@ impl<T: Config> NativeFungibleHandle<T> {
 	}
 }
 
+#[solidity_interface(name = ERC20Burnable, is(ERC20), enum(derive(PreDispatch)), enum_attr(weight))]
+impl<T: Config> NativeFungibleHandle<T> {
+	pub fn burn(&mut self, caller: Caller, value: U256) -> Result<()> {
+		self.consume_store_reads(2)?;
+		self.consume_store_writes(2)?;
+
+		let caller = T::CrossAccountId::from_eth(caller);
+		let value = value.try_into().map_err(|_| "value overflow")?;
+
+		<Pallet<T>>::burn(&caller, value).map_err(dispatch_to_evm::<T>)
+	}
+
+	pub fn burn_from(&mut self, caller: Caller, account: Address, value: U256) -> Result<()> {
+		self.consume_store_reads(3)?;
+		self.consume_store_writes(3)?;
+
+		let caller = T::CrossAccountId::from_eth(caller);
+		let account = T::CrossAccountId::from_eth(account);
+		let value = value.try_into().map_err(|_| "value overflow")?;
+
+		<Pallet<T>>::spend_allowance(&account, &caller, value).map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::burn(&account, value).map_err(dispatch_to_evm::<T>)
+	}
+}
+
+#[solidity_interface(name = ERC20Mintable, is(ERC20), enum(derive(PreDispatch)), enum_attr(weight))]
+impl<T: Config> NativeFungibleHandle<T> {
+	pub fn mint(&mut self, caller: Caller, to: Address, amount: U256) -> Result<()> {
+		self.consume_store_reads(3)?;
+		self.consume_store_writes(2)?;
+
+		let caller = T::CrossAccountId::from_eth(caller);
+		let to = T::CrossAccountId::from_eth(to);
+		let amount = amount.try_into().map_err(|_| "value overflow")?;
+
+		<Pallet<T>>::check_account_permissions(&caller, AccountPermissions::MINT)
+			.map_err(dispatch_to_evm::<T>)?;
+
+		<Pallet<T>>::mint(&to, amount).map_err(dispatch_to_evm::<T>)
+	}
+}
+
 #[solidity_interface(name = XcmExtensions, is(ERC20), enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> NativeFungibleHandle<T>
 where
@@ -168,6 +210,34 @@ where
 	}
 }
 
+#[solidity_interface(name = PermissionsExtensions, is(ERC20), enum(derive(PreDispatch)), enum_attr(weight))]
+impl<T: Config> NativeFungibleHandle<T> {
+	/// Change account permissions.
+	///
+	/// Permissions bits.
+	///
+	/// 1 bit: allow account to mint new tokens.
+	/// 2 - 8 bits: reserved.
+	fn set_account_permissions(
+		&mut self,
+		caller: Caller,
+		account: Address,
+		permissions: u64,
+	) -> Result<()> {
+		self.consume_store_reads(1)?;
+		self.consume_store_writes(1)?;
+
+		let caller = T::CrossAccountId::from_eth(caller);
+		let account = T::CrossAccountId::from_eth(account);
+		let permissions = AccountPermissions::from_bits_truncate(permissions);
+
+		todo!("Check permissions");
+		<Pallet<T>>::set_account_permissions(&account, permissions);
+
+		Ok(())
+	}
+}
+
 /// Implements [`OnMethodCall`], which delegates call to [`NativeFungibleHandle`]
 pub struct AdapterOnMethodCall<T: Config>(PhantomData<*const T>);
 impl<T: Config> OnMethodCall<T> for AdapterOnMethodCall<T>
@@ -200,7 +270,7 @@ where
 
 #[solidity_interface(
 	name = NativeFungible,
-	is(ERC20, XcmExtensions),
+	is(ERC20, ERC20Burnable, ERC20Mintable, XcmExtensions, PermissionsExtensions),
 	enum(derive(PreDispatch))
 )]
 impl<T: Config> NativeFungibleHandle<T>

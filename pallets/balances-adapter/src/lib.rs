@@ -98,6 +98,7 @@ pub mod pallet {
 		/// Weight information
 		type WeightInfo: WeightInfo;
 	}
+
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 
@@ -222,6 +223,28 @@ pub mod pallet {
 				<Error<T>>::ERC20InvalidReceiver
 			);
 			Ok(())
+		}
+
+		pub fn set_account_permissions(
+			account: &T::CrossAccountId,
+			permissions: AccountPermissions,
+		) -> DispatchResult {
+			todo!()
+		}
+
+		pub fn check_account_permissions(
+			account: &T::CrossAccountId,
+			permissions: AccountPermissions,
+		) -> DispatchResult {
+			todo!()
+		}
+
+		pub fn burn(account: &T::CrossAccountId, amount: u128) -> DispatchResult {
+			todo!()
+		}
+
+		pub fn mint(to: &T::CrossAccountId, amount: u128) -> DispatchResult {
+			todo!()
 		}
 	}
 }
