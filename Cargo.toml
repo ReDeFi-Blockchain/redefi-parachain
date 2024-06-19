@@ -5,6 +5,9 @@ package.edition = "2021"
 package.version = "1.9.0"
 resolver = "2"
 
+[profile.dev]
+opt-level = 1
+
 [profile.release]
 # Runtime requires unwinding
 panic = "unwind"

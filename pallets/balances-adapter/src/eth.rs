@@ -110,7 +110,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let value = value.try_into().map_err(|_| "value overflow")?;
 
-		<Pallet<T>>::burn(&caller, value).map_err(dispatch_to_evm::<T>)
+		<Pallet<T>>::burn_unchecked(&caller, value).map_err(dispatch_to_evm::<T>)
 	}
 
 	pub fn burn_from(&mut self, caller: Caller, account: Address, value: U256) -> Result<()> {
@@ -122,7 +122,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 		let value = value.try_into().map_err(|_| "value overflow")?;
 
 		<Pallet<T>>::spend_allowance(&account, &caller, value).map_err(dispatch_to_evm::<T>)?;
-		<Pallet<T>>::burn(&account, value).map_err(dispatch_to_evm::<T>)
+		<Pallet<T>>::burn_unchecked(&account, value).map_err(dispatch_to_evm::<T>)
 	}
 }
 
@@ -139,7 +139,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 		<Pallet<T>>::check_account_permissions(&caller, AccountPermissions::MINT)
 			.map_err(dispatch_to_evm::<T>)?;
 
-		<Pallet<T>>::mint(&to, amount).map_err(dispatch_to_evm::<T>)
+		<Pallet<T>>::mint_unchecked(&to, amount).map_err(dispatch_to_evm::<T>)
 	}
 }
 
@@ -218,23 +218,16 @@ impl<T: Config> NativeFungibleHandle<T> {
 	///
 	/// 1 bit: allow account to mint new tokens.
 	/// 2 - 8 bits: reserved.
+	#[allow(unused_variables)]
 	fn set_account_permissions(
 		&mut self,
 		caller: Caller,
 		account: Address,
 		permissions: u64,
 	) -> Result<()> {
-		self.consume_store_reads(1)?;
-		self.consume_store_writes(1)?;
-
-		let caller = T::CrossAccountId::from_eth(caller);
-		let account = T::CrossAccountId::from_eth(account);
-		let permissions = AccountPermissions::from_bits_truncate(permissions);
-
-		todo!("Check permissions");
-		<Pallet<T>>::set_account_permissions(&account, permissions);
-
-		Ok(())
+		Err(dispatch_to_evm::<T>(
+			<Error<T>>::OwnableUnauthorizedAccount.into(),
+		))
 	}
 }
 

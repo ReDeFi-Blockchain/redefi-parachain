@@ -39,10 +39,11 @@ pub mod pallet {
 		ensure,
 		storage::Key,
 		traits::{
-			tokens::{Balance, Preservation},
+			tokens::{Balance, Fortitude, Precision, Preservation},
 			Get,
 		},
 	};
+	use frame_system::{ensure_root, pallet_prelude::OriginFor, RawOrigin};
 
 	use super::*;
 
@@ -55,6 +56,7 @@ pub mod pallet {
 		Erc20InvalidSpender,
 		ERC20InsufficientBalance,
 		OwnableUnauthorizedAccount,
+		UnauthorizedAccount,
 		AssetNotFound,
 	}
 
@@ -67,6 +69,18 @@ pub mod pallet {
 		Value = u128,
 		QueryKind = ValueQuery,
 	>;
+
+	#[pallet::storage]
+	pub(super) type Permissions<T: Config> =
+		StorageMap<_, Blake2_128, T::CrossAccountId, AccountPermissions, ValueQuery>;
+
+	bitflags::bitflags! {
+		/// Permissions of an account.
+		#[derive(Encode, Decode, MaxEncodedLen, Default, TypeInfo)]
+		pub struct AccountPermissions: u64 {
+			const MINT = 1;
+		}
+	}
 
 	#[pallet::config]
 	pub trait Config:
@@ -217,7 +231,7 @@ pub mod pallet {
 			Self::transfer(from, to, amount)
 		}
 
-		pub fn check_receiver(receiver: &T::CrossAccountId) -> DispatchResult {
+		fn check_receiver(receiver: &T::CrossAccountId) -> DispatchResult {
 			ensure!(
 				&T::CrossAccountId::from_eth(H160::zero()) != receiver,
 				<Error<T>>::ERC20InvalidReceiver
@@ -226,25 +240,70 @@ pub mod pallet {
 		}
 
 		pub fn set_account_permissions(
+			origin: OriginFor<T>,
 			account: &T::CrossAccountId,
 			permissions: AccountPermissions,
 		) -> DispatchResult {
-			todo!()
+			ensure_root(origin).map_err(|_| <Error<T>>::OwnableUnauthorizedAccount)?;
+
+			if permissions.is_empty() {
+				<Permissions<T>>::remove(account);
+			} else {
+				<Permissions<T>>::insert(account, permissions);
+			}
+
+			Ok(())
 		}
 
 		pub fn check_account_permissions(
 			account: &T::CrossAccountId,
 			permissions: AccountPermissions,
 		) -> DispatchResult {
-			todo!()
+			let account_permissions =
+				<Permissions<T>>::try_get(account).map_err(|_| <Error<T>>::UnauthorizedAccount)?;
+
+			if account_permissions.contains(permissions) {
+				Ok(())
+			} else {
+				Err(<Error<T>>::UnauthorizedAccount.into())
+			}
+		}
+
+		pub fn mint(origin: OriginFor<T>, to: &T::CrossAccountId, amount: u128) -> DispatchResult {
+			Self::check_mint_permissions(origin)?;
+			Self::mint_unchecked(to, amount)
+		}
+
+		fn check_mint_permissions(origin: OriginFor<T>) -> DispatchResult {
+			match origin.into() {
+				Ok(RawOrigin::Root) => Ok(()),
+				Ok(RawOrigin::Signed(account)) => Self::check_account_permissions(
+					&T::CrossAccountId::from_sub(account),
+					AccountPermissions::MINT,
+				),
+				_ => Err(<Error<T>>::UnauthorizedAccount.into()),
+			}
+		}
+
+		pub(crate) fn mint_unchecked(to: &T::CrossAccountId, amount: u128) -> DispatchResult {
+			Self::mint_into(to.as_eth(), amount.into())?;
+			Ok(())
 		}
 
 		pub fn burn(account: &T::CrossAccountId, amount: u128) -> DispatchResult {
-			todo!()
+			// TODO: Check permissions
+			Self::burn_unchecked(account, amount)
 		}
 
-		pub fn mint(to: &T::CrossAccountId, amount: u128) -> DispatchResult {
-			todo!()
+		pub(crate) fn burn_unchecked(account: &T::CrossAccountId, amount: u128) -> DispatchResult {
+			Self::burn_from(
+				account.as_eth(),
+				amount.into(),
+				Precision::Exact,
+				Fortitude::Polite,
+			)?;
+
+			Ok(())
 		}
 	}
 }
