@@ -27,6 +27,8 @@ pub mod eth;
 pub mod handle;
 use handle::*;
 mod impl_fungible;
+mod types;
+use types::*;
 
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 pub(crate) type ChainId = u64;
@@ -72,15 +74,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	pub(super) type Permissions<T: Config> =
-		StorageMap<_, Blake2_128, T::CrossAccountId, AccountPermissions, ValueQuery>;
-
-	bitflags::bitflags! {
-		/// Permissions of an account.
-		#[derive(Encode, Decode, MaxEncodedLen, Default, TypeInfo)]
-		pub struct AccountPermissions: u64 {
-			const MINT = 1;
-		}
-	}
+		StorageMap<_, Blake2_128, H160, AccountPermissions, ValueQuery>;
 
 	#[pallet::config]
 	pub trait Config:
@@ -247,16 +241,16 @@ pub mod pallet {
 			ensure_root(origin).map_err(|_| <Error<T>>::OwnableUnauthorizedAccount)?;
 
 			if permissions.is_empty() {
-				<Permissions<T>>::remove(account);
+				<Permissions<T>>::remove(&account.as_eth());
 			} else {
-				<Permissions<T>>::insert(account, permissions);
+				<Permissions<T>>::insert(&account.as_eth(), permissions);
 			}
 
 			Ok(())
 		}
 
 		pub fn check_account_permissions(
-			account: &T::CrossAccountId,
+			account: &H160,
 			permissions: AccountPermissions,
 		) -> DispatchResult {
 			let account_permissions =
@@ -271,38 +265,32 @@ pub mod pallet {
 
 		pub fn mint(origin: OriginFor<T>, to: &T::CrossAccountId, amount: u128) -> DispatchResult {
 			Self::check_mint_permissions(origin)?;
-			Self::mint_unchecked(to, amount)
+			Self::mint_unchecked(to.as_eth(), amount)
 		}
 
 		fn check_mint_permissions(origin: OriginFor<T>) -> DispatchResult {
 			match origin.into() {
 				Ok(RawOrigin::Root) => Ok(()),
 				Ok(RawOrigin::Signed(account)) => Self::check_account_permissions(
-					&T::CrossAccountId::from_sub(account),
+					&T::CrossAccountId::from_sub(account).as_eth(),
 					AccountPermissions::MINT,
 				),
 				_ => Err(<Error<T>>::UnauthorizedAccount.into()),
 			}
 		}
 
-		pub(crate) fn mint_unchecked(to: &T::CrossAccountId, amount: u128) -> DispatchResult {
-			Self::mint_into(to.as_eth(), amount.into())?;
+		pub(crate) fn mint_unchecked(to: &H160, amount: u128) -> DispatchResult {
+			Self::mint_into(to, amount.into())?;
 			Ok(())
 		}
 
 		pub fn burn(account: &T::CrossAccountId, amount: u128) -> DispatchResult {
 			// TODO: Check permissions
-			Self::burn_unchecked(account, amount)
+			Self::burn_unchecked(account.as_eth(), amount)
 		}
 
-		pub(crate) fn burn_unchecked(account: &T::CrossAccountId, amount: u128) -> DispatchResult {
-			Self::burn_from(
-				account.as_eth(),
-				amount.into(),
-				Precision::Exact,
-				Fortitude::Polite,
-			)?;
-
+		pub(crate) fn burn_unchecked(account: &H160, amount: u128) -> DispatchResult {
+			Self::burn_from(account, amount.into(), Precision::Exact, Fortitude::Polite)?;
 			Ok(())
 		}
 	}

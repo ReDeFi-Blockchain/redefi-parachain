@@ -107,7 +107,6 @@ impl<T: Config> NativeFungibleHandle<T> {
 		self.consume_store_reads(2)?;
 		self.consume_store_writes(2)?;
 
-		let caller = T::CrossAccountId::from_eth(caller);
 		let value = value.try_into().map_err(|_| "value overflow")?;
 
 		<Pallet<T>>::burn_unchecked(&caller, value).map_err(dispatch_to_evm::<T>)
@@ -122,7 +121,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 		let value = value.try_into().map_err(|_| "value overflow")?;
 
 		<Pallet<T>>::spend_allowance(&account, &caller, value).map_err(dispatch_to_evm::<T>)?;
-		<Pallet<T>>::burn_unchecked(&account, value).map_err(dispatch_to_evm::<T>)
+		<Pallet<T>>::burn_unchecked(&account.as_eth(), value).map_err(dispatch_to_evm::<T>)
 	}
 }
 
@@ -132,8 +131,6 @@ impl<T: Config> NativeFungibleHandle<T> {
 		self.consume_store_reads(3)?;
 		self.consume_store_writes(2)?;
 
-		let caller = T::CrossAccountId::from_eth(caller);
-		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "value overflow")?;
 
 		<Pallet<T>>::check_account_permissions(&caller, AccountPermissions::MINT)
