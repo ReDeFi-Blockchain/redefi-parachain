@@ -33,6 +33,8 @@ use types::*;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 pub(crate) type ChainId = u64;
 
+pub(crate) const LOG_TARGET: &str = "runtime::balances-adapter";
+
 #[frame_support::pallet]
 pub mod pallet {
 	use alloc::string::String;
@@ -45,7 +47,6 @@ pub mod pallet {
 			Get,
 		},
 	};
-	use frame_system::{ensure_root, pallet_prelude::OriginFor, RawOrigin};
 
 	use super::*;
 
@@ -74,12 +75,14 @@ pub mod pallet {
 
 	#[pallet::storage]
 	pub(super) type Permissions<T: Config> =
-		StorageMap<_, Blake2_128, H160, AccountPermissions, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, H160, AccountPermissions, ValueQuery>;
 
 	#[pallet::config]
 	pub trait Config:
 		frame_system::Config + pallet_evm_coder_substrate::Config + pallet_xcm::Config
 	{
+		type SudoAccountId: for<'a> TryFrom<&'a [u8]> + Into<Self::AccountId>;
+
 		type Balances: Mutate<Self::AccountId, Balance = Self::NativeBalance>;
 
 		type NativeBalance: Balance + Into<U256> + TryFrom<U256> + From<u128> + Into<u128>;
@@ -233,26 +236,45 @@ pub mod pallet {
 			Ok(())
 		}
 
-		pub fn set_account_permissions(
-			origin: OriginFor<T>,
-			account: &T::CrossAccountId,
-			permissions: AccountPermissions,
-		) -> DispatchResult {
-			ensure_root(origin).map_err(|_| <Error<T>>::OwnableUnauthorizedAccount)?;
+		pub fn check_root(account: &Address) -> DispatchResult {
+			const SUDO_STORAGE_KEY: [u8; 32] = hex_literal::hex!(
+				"5c0d1176a568c1f92944340dbfed9e9c530ebca703c85910e7164cb7d1c9e47b"
+			);
 
-			if permissions.is_empty() {
-				<Permissions<T>>::remove(&account.as_eth());
+			let Some(sudoer_raw_key) = sp_io::storage::get(&SUDO_STORAGE_KEY) else {
+				log::error!(target: LOG_TARGET, "Sudo key not found");
+				return Err(<Error<T>>::OwnableUnauthorizedAccount.into());
+			};
+
+			let Ok(sudoer_key) = T::SudoAccountId::try_from(&sudoer_raw_key) else {
+				log::error!(target: LOG_TARGET, "Failed to deserialize sudo key {sudoer_raw_key:?}");
+				return Err(<Error<T>>::OwnableUnauthorizedAccount.into());
+			};
+
+			let cross_sudoer_key = T::CrossAccountId::from_sub(sudoer_key.into());
+			if cross_sudoer_key.as_eth() == account {
+				Ok(())
 			} else {
-				<Permissions<T>>::insert(&account.as_eth(), permissions);
+				Err(<Error<T>>::OwnableUnauthorizedAccount.into())
 			}
+		}
 
-			Ok(())
+		pub fn set_account_permissions(account: &Address, permissions: AccountPermissions) {
+			if permissions.is_empty() {
+				<Permissions<T>>::remove(account);
+			} else {
+				<Permissions<T>>::insert(account, permissions);
+			}
 		}
 
 		pub fn check_account_permissions(
-			account: &H160,
+			account: &Address,
 			permissions: AccountPermissions,
 		) -> DispatchResult {
+			if Self::check_root(account).is_ok() {
+				return Ok(());
+			}
+
 			let account_permissions =
 				<Permissions<T>>::try_get(account).map_err(|_| <Error<T>>::UnauthorizedAccount)?;
 
@@ -263,34 +285,15 @@ pub mod pallet {
 			}
 		}
 
-		pub fn mint(origin: OriginFor<T>, to: &T::CrossAccountId, amount: u128) -> DispatchResult {
-			Self::check_mint_permissions(origin)?;
-			Self::mint_unchecked(to.as_eth(), amount)
-		}
-
-		fn check_mint_permissions(origin: OriginFor<T>) -> DispatchResult {
-			match origin.into() {
-				Ok(RawOrigin::Root) => Ok(()),
-				Ok(RawOrigin::Signed(account)) => Self::check_account_permissions(
-					&T::CrossAccountId::from_sub(account).as_eth(),
-					AccountPermissions::MINT,
-				),
-				_ => Err(<Error<T>>::UnauthorizedAccount.into()),
-			}
-		}
-
-		pub(crate) fn mint_unchecked(to: &H160, amount: u128) -> DispatchResult {
+		pub fn mint(to: &Address, amount: u128) -> DispatchResult {
+			ensure!(to != &Address::zero(), <Error<T>>::ERC20InvalidSender);
 			Self::mint_into(to, amount.into())?;
 			Ok(())
 		}
 
-		pub fn burn(account: &T::CrossAccountId, amount: u128) -> DispatchResult {
-			// TODO: Check permissions
-			Self::burn_unchecked(account.as_eth(), amount)
-		}
-
-		pub(crate) fn burn_unchecked(account: &H160, amount: u128) -> DispatchResult {
-			Self::burn_from(account, amount.into(), Precision::Exact, Fortitude::Polite)?;
+		pub fn burn(from: &Address, amount: u128) -> DispatchResult {
+			ensure!(from != &Address::zero(), <Error<T>>::ERC20InvalidSender);
+			Self::burn_from(from, amount.into(), Precision::Exact, Fortitude::Polite)?;
 			Ok(())
 		}
 	}

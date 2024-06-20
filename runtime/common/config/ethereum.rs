@@ -152,6 +152,7 @@ parameter_types! {
 }
 
 impl pallet_balances_adapter::Config for Runtime {
+	type SudoAccountId = Self::AccountId;
 	type Balances = Balances;
 	type NativeBalance = up_common::types::Balance;
 	type ContractAddress = AdapterContractAddress;

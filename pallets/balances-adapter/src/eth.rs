@@ -109,7 +109,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 
 		let value = value.try_into().map_err(|_| "value overflow")?;
 
-		<Pallet<T>>::burn_unchecked(&caller, value).map_err(dispatch_to_evm::<T>)
+		<Pallet<T>>::burn(&caller, value).map_err(dispatch_to_evm::<T>)
 	}
 
 	pub fn burn_from(&mut self, caller: Caller, account: Address, value: U256) -> Result<()> {
@@ -121,7 +121,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 		let value = value.try_into().map_err(|_| "value overflow")?;
 
 		<Pallet<T>>::spend_allowance(&account, &caller, value).map_err(dispatch_to_evm::<T>)?;
-		<Pallet<T>>::burn_unchecked(&account.as_eth(), value).map_err(dispatch_to_evm::<T>)
+		<Pallet<T>>::burn(&account.as_eth(), value).map_err(dispatch_to_evm::<T>)
 	}
 }
 
@@ -136,7 +136,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 		<Pallet<T>>::check_account_permissions(&caller, AccountPermissions::MINT)
 			.map_err(dispatch_to_evm::<T>)?;
 
-		<Pallet<T>>::mint_unchecked(&to, amount).map_err(dispatch_to_evm::<T>)
+		<Pallet<T>>::mint(&to, amount).map_err(dispatch_to_evm::<T>)
 	}
 }
 
@@ -222,9 +222,15 @@ impl<T: Config> NativeFungibleHandle<T> {
 		account: Address,
 		permissions: u64,
 	) -> Result<()> {
-		Err(dispatch_to_evm::<T>(
-			<Error<T>>::OwnableUnauthorizedAccount.into(),
-		))
+		self.consume_store_reads(1)?;
+		self.consume_store_writes(1)?;
+
+		<Pallet<T>>::check_root(&caller).map_err(dispatch_to_evm::<T>)?;
+
+		let permissions = AccountPermissions::from_bits_truncate(permissions);
+		<Pallet<T>>::set_account_permissions(&account, permissions);
+
+		Ok(())
 	}
 }
 
