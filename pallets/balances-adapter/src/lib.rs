@@ -18,6 +18,7 @@ use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use pallet_xcm::{Pallet as PalletXcm, WeightInfo as PalletXcmWeightInfo};
 use sp_core::{H160, U256};
+use sp_runtime::TokenError;
 use sp_std::{boxed::Box, collections::btree_map::BTreeMap};
 use staging_xcm::{
 	latest::{Asset as XcmAsset, Fungibility, Junction, Location},
@@ -287,14 +288,28 @@ pub mod pallet {
 
 		pub fn mint(to: &Address, amount: u128) -> DispatchResult {
 			ensure!(to != &Address::zero(), <Error<T>>::ERC20InvalidSender);
-			Self::mint_into(to, amount.into())?;
+
+			Self::mint_into(to, amount.into()).map_err(Self::map_substrate_error)?;
+
 			Ok(())
 		}
 
 		pub fn burn(from: &Address, amount: u128) -> DispatchResult {
 			ensure!(from != &Address::zero(), <Error<T>>::ERC20InvalidSender);
-			Self::burn_from(from, amount.into(), Precision::Exact, Fortitude::Polite)?;
+
+			Self::burn_from(from, amount.into(), Precision::Exact, Fortitude::Polite)
+				.map_err(Self::map_substrate_error)?;
+
 			Ok(())
+		}
+
+		fn map_substrate_error(error: DispatchError) -> DispatchError {
+			match error {
+				DispatchError::Token(TokenError::FundsUnavailable) => {
+					<Error<T>>::ERC20InsufficientBalance.into()
+				}
+				_ => error,
+			}
 		}
 	}
 }
