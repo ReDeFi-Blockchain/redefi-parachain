@@ -43,24 +43,20 @@ use crate::service::RuntimeApiDep;
 type FullBackend = sc_service::TFullBackend<Block>;
 
 /// Full client dependencies.
-pub struct FullDeps<C, P, SC> {
+pub struct FullDeps<C, P> {
 	/// The client instance to use.
 	pub client: Arc<C>,
 	/// Transaction pool instance.
 	pub pool: Arc<P>,
-	/// The SelectChain Strategy
-	pub select_chain: SC,
+
 	/// Whether to deny unsafe calls
 	pub deny_unsafe: DenyUnsafe,
-
-	/// Runtime identification (read from the chain spec)
-	pub runtime_id: RuntimeId,
 }
 
 /// Instantiate all Full RPC extensions.
-pub fn create_full<C, P, SC, R, B>(
+pub fn create_full<C, P, R, B>(
 	io: &mut RpcModule<()>,
-	deps: FullDeps<C, P, SC>,
+	deps: FullDeps<C, P>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
 where
 	C: ProvideRuntimeApi<Block> + StorageProvider<Block, B> + AuxStore,
@@ -87,10 +83,7 @@ where
 	let FullDeps {
 		client,
 		pool,
-		select_chain: _,
 		deny_unsafe,
-
-		runtime_id: _,
 	} = deps;
 
 	io.merge(System::new(Arc::clone(&client), Arc::clone(&pool), deny_unsafe).into_rpc())?;
