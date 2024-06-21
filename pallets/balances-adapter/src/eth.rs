@@ -42,10 +42,10 @@ impl<T: Config> NativeFungibleHandle<T> {
 
 	fn approve(&mut self, caller: Caller, spender: Address, amount: U256) -> Result<bool> {
 		self.consume_store_writes(1)?;
-		let owner = T::CrossAccountId::from_eth(caller);
-		let spender = T::CrossAccountId::from_eth(spender);
+
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		<Pallet<T>>::approve(&owner, &spender, amount, true).map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::approve(caller, spender, amount).map_err(dispatch_to_evm::<T>)?;
+
 		Ok(true)
 	}
 
@@ -75,10 +75,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 
 	#[weight(<SelfWeightOf<T>>::transfer_allow_death())]
 	fn transfer(&mut self, caller: Caller, to: Address, amount: U256) -> Result<bool> {
-		let caller = T::CrossAccountId::from_eth(caller);
-		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-
 		<Pallet<T>>::transfer(&caller, &to, amount).map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
@@ -91,11 +88,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 		to: Address,
 		amount: U256,
 	) -> Result<bool> {
-		let caller = T::CrossAccountId::from_eth(caller);
-		let from = T::CrossAccountId::from_eth(from);
-		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-
 		<Pallet<T>>::transfer_from(&caller, &from, &to, amount).map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
@@ -116,12 +109,10 @@ impl<T: Config> NativeFungibleHandle<T> {
 		self.consume_store_reads(3)?;
 		self.consume_store_writes(3)?;
 
-		let caller = T::CrossAccountId::from_eth(caller);
-		let account = T::CrossAccountId::from_eth(account);
 		let value = value.try_into().map_err(|_| "value overflow")?;
 
 		<Pallet<T>>::spend_allowance(&account, &caller, value).map_err(dispatch_to_evm::<T>)?;
-		<Pallet<T>>::burn(&account.as_eth(), value).map_err(dispatch_to_evm::<T>)
+		<Pallet<T>>::burn(&account, value).map_err(dispatch_to_evm::<T>)
 	}
 }
 

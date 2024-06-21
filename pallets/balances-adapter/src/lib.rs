@@ -34,7 +34,7 @@ use types::*;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 pub(crate) type ChainId = u64;
 
-pub(crate) const LOG_TARGET: &str = "runtime::balances-adapter";
+pub(crate) const LOG_TARGET: &str = "evm::balances-adapter";
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -131,40 +131,26 @@ pub mod pallet {
 			<Allowance<T>>::get((owner.as_eth(), spender.as_eth())).into()
 		}
 
-		pub fn approve(
-			owner: &T::CrossAccountId,
-			spender: &T::CrossAccountId,
-			amount: u128,
-			emit_event: bool,
-		) -> DispatchResult {
-			Self::check_receiver(spender)?;
-
-			let owner = *owner.as_eth();
-			let spender = *spender.as_eth();
+		pub fn approve(owner: Address, spender: Address, amount: u128) -> DispatchResult {
+			ensure!(spender != Address::zero(), <Error<T>>::ERC20InvalidReceiver);
 
 			<Allowance<T>>::set((&owner, &spender), amount);
 
-			if emit_event {
-				<PalletEvm<T>>::deposit_log(
-					eth::ERC20Events::Approval {
-						owner,
-						spender,
-						value: amount.into(),
-					}
-					.to_log(T::ContractAddress::get()),
-				);
-			};
+			<PalletEvm<T>>::deposit_log(
+				eth::ERC20Events::Approval {
+					owner,
+					spender,
+					value: amount.into(),
+				}
+				.to_log(T::ContractAddress::get()),
+			);
 
 			Ok(())
 		}
 
 		/// Updates `owner` s allowance for `spender` based on spent `value`.
-		pub fn spend_allowance(
-			owner: &T::CrossAccountId,
-			spender: &T::CrossAccountId,
-			amount: u128,
-		) -> DispatchResult {
-			let key = (owner.as_eth(), spender.as_eth());
+		pub fn spend_allowance(owner: &Address, spender: &Address, amount: u128) -> DispatchResult {
+			let key = (owner, spender);
 			let current_allowance = <Allowance<T>>::get(&key);
 
 			ensure!(
@@ -173,6 +159,7 @@ pub mod pallet {
 			);
 
 			<Allowance<T>>::mutate(&key, |allowance| *allowance -= amount);
+
 			Ok(())
 		}
 
@@ -181,31 +168,11 @@ pub mod pallet {
 		/// - `from`: Owner of tokens to transfer.
 		/// - `to`: Recepient of transfered tokens.
 		/// - `amount`: Amount of tokens to transfer.
-		pub fn transfer(
-			from: &T::CrossAccountId,
-			to: &T::CrossAccountId,
-			amount: u128,
-		) -> DispatchResult {
-			Self::check_receiver(to)?;
+		pub fn transfer(from: &Address, to: &Address, amount: u128) -> DispatchResult {
+			ensure!(to != &Address::zero(), <Error<T>>::ERC20InvalidReceiver);
 
-			{
-				let amount = amount.into();
-				T::Balances::transfer(
-					from.as_sub(),
-					to.as_sub(),
-					amount,
-					Preservation::Expendable,
-				)?;
-			}
-
-			<PalletEvm<T>>::deposit_log(
-				eth::ERC20Events::Transfer {
-					from: *from.as_eth(),
-					to: *to.as_eth(),
-					value: amount.into(),
-				}
-				.to_log(T::ContractAddress::get()),
-			);
+			<Self as Mutate<Address>>::transfer(from, to, amount.into(), Preservation::Expendable)
+				.map_err(Self::map_substrate_error)?;
 
 			Ok(())
 		}
@@ -220,21 +187,13 @@ pub mod pallet {
 		/// - `to`: Recepient of transfered tokens.
 		/// - `amount`: Amount of tokens to transfer.
 		pub fn transfer_from(
-			spender: &T::CrossAccountId,
-			from: &T::CrossAccountId,
-			to: &T::CrossAccountId,
+			spender: &Address,
+			from: &Address,
+			to: &Address,
 			amount: u128,
 		) -> DispatchResult {
 			Self::spend_allowance(from, spender, amount)?;
 			Self::transfer(from, to, amount)
-		}
-
-		fn check_receiver(receiver: &T::CrossAccountId) -> DispatchResult {
-			ensure!(
-				&T::CrossAccountId::from_eth(H160::zero()) != receiver,
-				<Error<T>>::ERC20InvalidReceiver
-			);
-			Ok(())
 		}
 
 		pub fn check_root(account: &Address) -> DispatchResult {
