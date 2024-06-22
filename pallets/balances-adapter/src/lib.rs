@@ -80,10 +80,10 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config:
-		frame_system::Config + pallet_evm_coder_substrate::Config + pallet_xcm::Config
+		frame_system::Config<AccountId: for<'a> TryFrom<&'a [u8]>>
+		+ pallet_evm_coder_substrate::Config
+		+ pallet_xcm::Config
 	{
-		type SudoAccountId: for<'a> TryFrom<&'a [u8]> + Into<Self::AccountId>;
-
 		type Balances: Mutate<Self::AccountId, Balance = Self::NativeBalance>;
 
 		type NativeBalance: Balance + Into<U256> + TryFrom<U256> + From<u128> + Into<u128>;
@@ -206,12 +206,12 @@ pub mod pallet {
 				return Err(<Error<T>>::OwnableUnauthorizedAccount.into());
 			};
 
-			let Ok(sudoer_key) = T::SudoAccountId::try_from(&sudoer_raw_key) else {
+			let Ok(sudoer_key) = T::AccountId::try_from(&sudoer_raw_key) else {
 				log::error!(target: LOG_TARGET, "Failed to deserialize sudo key {sudoer_raw_key:?}");
 				return Err(<Error<T>>::OwnableUnauthorizedAccount.into());
 			};
 
-			let cross_sudoer_key = T::CrossAccountId::from_sub(sudoer_key.into());
+			let cross_sudoer_key = T::CrossAccountId::from_sub(sudoer_key);
 			if cross_sudoer_key.as_eth() == account {
 				Ok(())
 			} else {
