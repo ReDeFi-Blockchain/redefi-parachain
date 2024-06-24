@@ -59,6 +59,8 @@ pub mod pallet {
 		ERC20InvalidSender,
 		Erc20InvalidSpender,
 		ERC20InsufficientBalance,
+		OwnerNotFound,
+		InvalidOwnerKey,
 		OwnableUnauthorizedAccount,
 		UnauthorizedAccount,
 		AssetNotFound,
@@ -202,13 +204,11 @@ pub mod pallet {
 			);
 
 			let Some(sudoer_raw_key) = sp_io::storage::get(&SUDO_STORAGE_KEY) else {
-				log::error!(target: LOG_TARGET, "Sudo key not found");
-				return Err(<Error<T>>::OwnableUnauthorizedAccount.into());
+				return Err(<Error<T>>::OwnerNotFound.into());
 			};
 
 			let Ok(sudoer_key) = T::AccountId::try_from(&sudoer_raw_key) else {
-				log::error!(target: LOG_TARGET, "Failed to deserialize sudo key {sudoer_raw_key:?}");
-				return Err(<Error<T>>::OwnableUnauthorizedAccount.into());
+				return Err(<Error<T>>::InvalidOwnerKey.into());
 			};
 
 			let cross_sudoer_key = T::CrossAccountId::from_sub(sudoer_key);
