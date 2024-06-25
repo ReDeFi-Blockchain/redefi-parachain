@@ -87,28 +87,18 @@ fn get_sponsor<T: Config>(
 	is_transactional: bool,
 	is_check: bool,
 ) -> Option<T::CrossAccountId> {
-	let accept_gas_fee = |gas_fee| {
-		let (base_fee, _) = T::FeeCalculator::min_gas_price();
-		// Metamask specifies base fee twice as much as chain reported minGasPrice
-		// But we allow further leeway (why?), sponsored base_fee to be 2.1*minGasPrice, thus 21/10.
-		base_fee <= gas_fee && gas_fee <= base_fee * 21 / 10
-	};
-	let (max_fee_per_gas, may_sponsor) = match (max_fee_per_gas, is_transactional) {
-		(Some(max_fee_per_gas), _) => (max_fee_per_gas, accept_gas_fee(max_fee_per_gas)),
+	let max_fee_per_gas = match (max_fee_per_gas, is_transactional) {
+		(Some(max_fee_per_gas), _) => max_fee_per_gas,
 		// Gas price check is skipped for non-transactional calls that don't
 		// define a `max_fee_per_gas` input.
-		(None, false) => (Default::default(), true),
+		(None, false) => Default::default(),
 		_ => return None,
 	};
 
 	let max_fee = max_fee_per_gas.saturating_mul(gas_limit.into());
 
-	// #[cfg(feature = "debug-logging")]
-	// log::trace!(target: "sponsoring", "checking who will pay fee for {:?} {:?}", source, reason);
 	with_transaction(|| {
-		let result = may_sponsor
-			.then(|| who_pays_fee::<T>(source, max_fee, reason))
-			.flatten();
+		let result = who_pays_fee::<T>(source, max_fee, reason);
 		if is_check {
 			TransactionOutcome::Rollback(Ok::<_, DispatchError>(result))
 		} else {
@@ -185,6 +175,7 @@ impl<T: Config> OnCheckEvmTransaction<T> for TransactionValidity<T> {
 		} else {
 			WithdrawReason::Create
 		};
+
 		let sponsor = get_sponsor::<T>(
 			*origin.as_eth(),
 			Some(max_fee_per_gas),

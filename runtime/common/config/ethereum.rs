@@ -13,9 +13,12 @@ use sp_std::collections::btree_map::BTreeMap;
 use staging_xcm::prelude::*;
 use up_common::constants::*;
 
-use super::xcm::RelayLocation;
+use super::{substrate::TreasuryAccount, xcm::RelayLocation};
 use crate::{
-	runtime_common::{ethereum::precompiles::UniquePrecompiles, DealWithFees},
+	runtime_common::{
+		ethereum::{precompiles::UniquePrecompiles, sponsoring::RedefiEthSponsorshipHandler},
+		DealWithFees,
+	},
 	Aura, Balances, ChainId, Runtime, RuntimeEvent, DECIMALS, TOKEN_SYMBOL, VERSION,
 };
 
@@ -74,62 +77,6 @@ impl fp_evm::FeeCalculator for EvmFeeCalculator {
 	}
 }
 
-use fp_evm::WithdrawReason;
-use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
-use pallet_evm::OnChargeEVMTransaction;
-use sp_runtime::traits::UniqueSaturatedInto;
-
-pub type NegativeImbalanceOf<C, T> =
-	<C as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
-pub struct TipsToTreasuryAdapter<C, OU>(sp_std::marker::PhantomData<(C, OU)>);
-impl<T, C, Treasury> OnChargeEVMTransaction<T> for TipsToTreasuryAdapter<C, Treasury>
-where
-	T: pallet_evm::Config,
-	C: Currency<<T as frame_system::Config>::AccountId>,
-	C::PositiveImbalance: Imbalance<
-		<C as Currency<<T as frame_system::Config>::AccountId>>::Balance,
-		Opposite = C::NegativeImbalance,
-	>,
-	C::NegativeImbalance: Imbalance<
-		<C as Currency<<T as frame_system::Config>::AccountId>>::Balance,
-		Opposite = C::PositiveImbalance,
-	>,
-	Treasury: OnUnbalanced<NegativeImbalanceOf<C, T>>,
-	U256: UniqueSaturatedInto<<C as Currency<<T as frame_system::Config>::AccountId>>::Balance>,
-{
-	// Kept type as Option to satisfy bound of Default
-	type LiquidityInfo =
-		<EVMCurrencyAdapter<C, Treasury> as OnChargeEVMTransaction<T>>::LiquidityInfo;
-
-	fn withdraw_fee(
-		who: &T::CrossAccountId,
-		reason: WithdrawReason,
-		fee: U256,
-	) -> Result<Self::LiquidityInfo, pallet_evm::Error<T>> {
-		<EVMCurrencyAdapter<C, Treasury> as OnChargeEVMTransaction<T>>::withdraw_fee(
-			who, reason, fee,
-		)
-	}
-
-	fn correct_and_deposit_fee(
-		who: &T::CrossAccountId,
-		corrected_fee: U256,
-		base_fee: U256,
-		already_withdrawn: Self::LiquidityInfo,
-	) -> Self::LiquidityInfo {
-		<EVMCurrencyAdapter<C, Treasury> as OnChargeEVMTransaction<T>>::correct_and_deposit_fee(
-			who,
-			corrected_fee,
-			base_fee,
-			already_withdrawn,
-		)
-	}
-
-	fn pay_priority_fee(tip: Self::LiquidityInfo) {
-		let Some(imbalance) = tip else { return };
-		Treasury::on_unbalanced(imbalance)
-	}
-}
 impl pallet_evm::Config for Runtime {
 	type CrossAccountId = CrossAccountId;
 	type AddressMapping = HashedAddressMapping<Self::Hashing>;
@@ -153,12 +100,13 @@ impl pallet_evm::Config for Runtime {
 	type OnCreate = pallet_evm_contract_helpers::HelpersOnCreate<Self>;
 	type ChainId = ChainId;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type OnChargeTransaction = TipsToTreasuryAdapter<Balances, DealWithFees>;
+	type OnChargeTransaction =
+		pallet_evm_transaction_payment::WrappedEVMCurrencyAdapter<Balances, DealWithFees>;
 	type FindAuthor = EthereumFindAuthor<Aura>;
 	type Timestamp = crate::Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Self>;
 	type GasLimitPovSizeRatio = ProofSizePerGas;
-	type OnCheckEvmTransaction = ();
+	type OnCheckEvmTransaction = pallet_evm_transaction_payment::TransactionValidity<Self>;
 	type SuicideQuickClearLimit = ConstU32<0>;
 }
 
@@ -187,6 +135,10 @@ impl pallet_evm_contract_helpers::Config for Runtime {
 }
 
 impl pallet_evm_coder_substrate::Config for Runtime {}
+
+impl pallet_evm_transaction_payment::Config for Runtime {
+	type EvmSponsorshipHandler = RedefiEthSponsorshipHandler<Self>;
+}
 
 parameter_types! {
 	pub const Decimals: u8 = DECIMALS;
