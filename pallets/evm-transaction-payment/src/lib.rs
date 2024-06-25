@@ -108,50 +108,6 @@ fn get_sponsor<T: Config>(
 	.ok()
 	.flatten()
 }
-/// Implements sponsoring for evm calls performed from pallet-evm (via api.tx.ethereum.transact/api.tx.evm.call)
-pub struct BridgeSponsorshipHandler<T>(PhantomData<T>);
-impl<T, C> SponsorshipHandler<T::AccountId, C> for BridgeSponsorshipHandler<T>
-where
-	T: Config + pallet_evm::Config,
-	C: IsSubType<pallet_evm::Call<T>>,
-{
-	fn get_sponsor(who: &T::AccountId, call: &C) -> Option<T::AccountId> {
-		match call.is_sub_type()? {
-			pallet_evm::Call::call {
-				source,
-				target,
-				input,
-				gas_limit,
-				max_fee_per_gas,
-				..
-			} => {
-				let _ = T::CallOrigin::ensure_address_origin(
-					source,
-					<frame_system::RawOrigin<T::AccountId>>::Signed(who.clone()).into(),
-				)
-				.ok()?;
-				let who = T::CrossAccountId::from_sub(who.clone());
-				let max_fee = max_fee_per_gas.saturating_mul((*gas_limit).into());
-				let call_context = CallContext {
-					contract_address: *target,
-					input: input.clone(),
-					max_fee,
-				};
-				// Effects from EvmSponsorshipHandler are applied by pallet_evm::runner
-				// TODO: Should we implement simulation mode (test, but do not apply effects) in `up-sponsorship`?
-				let sponsor = frame_support::storage::with_transaction(|| {
-					TransactionOutcome::Rollback(Ok::<_, DispatchError>(
-						T::EvmSponsorshipHandler::get_sponsor(&who, &call_context),
-					))
-				})
-				// FIXME: it may fail with DispatchError in case of depth limit
-				.ok()??;
-				Some(sponsor.as_sub().clone())
-			}
-			_ => None,
-		}
-	}
-}
 
 /// Set transaction sponsor if available and enough balance.
 pub struct TransactionValidity<T>(PhantomData<T>);
