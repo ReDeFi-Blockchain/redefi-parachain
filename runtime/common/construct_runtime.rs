@@ -45,13 +45,12 @@ macro_rules! construct_runtime {
 				// Frontier
 				EVM: pallet_evm = 100,
 				Ethereum: pallet_ethereum = 101,
+				EvmTransactionPayment: pallet_evm_transaction_payment = 102,
 
 				EvmCoderSubstrate: pallet_evm_coder_substrate = 150,
 				EvmContractHelpers: pallet_evm_contract_helpers = 151,
-				EvmTransactionPayment: pallet_evm_transaction_payment = 152,
-
-				BalancesAdapter: pallet_balances_adapter = 153,
-				EvmAssets: pallet_evm_assets = 154,
+				BalancesAdapter: pallet_balances_adapter = 152,
+				EvmAssets: pallet_evm_assets = 153,
 				Utility: pallet_utility = 156,
 			}
 		}
