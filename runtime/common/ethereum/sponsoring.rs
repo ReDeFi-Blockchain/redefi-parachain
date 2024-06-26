@@ -4,6 +4,7 @@ use pallet_evm::account::CrossAccountId;
 use pallet_evm_transaction_payment::CallContext;
 use up_sponsorship::SponsorshipHandler;
 
+// TODO: Move addresses to config/ethereum.rs.
 const BAX: [u8; 20] = hex_literal::hex!("FFFFFFFF0000000000000000000000000000BABB");
 const RED: [u8; 20] = hex_literal::hex!("FFFFFFFFBABB0000000000000000000000000000");
 const GBP: [u8; 20] = hex_literal::hex!("FFFFFFFFBABB0000000000000000000000000010");
