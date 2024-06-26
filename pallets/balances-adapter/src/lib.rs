@@ -34,8 +34,6 @@ use types::*;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 pub(crate) type ChainId = u64;
 
-pub(crate) const LOG_TARGET: &str = "evm::balances-adapter";
-
 #[frame_support::pallet]
 pub mod pallet {
 	use alloc::string::String;

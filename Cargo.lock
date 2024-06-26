@@ -6833,11 +6833,13 @@ dependencies = [
  "frame-system",
  "pallet-evm",
  "pallet-evm-coder-substrate",
+ "pallet-evm-transaction-payment",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-std",
  "up-data-structs",
+ "up-sponsorship",
 ]
 
 [[package]]
@@ -6848,6 +6850,22 @@ dependencies = [
  "fp-evm",
  "ripemd",
  "sp-io",
+]
+
+[[package]]
+name = "pallet-evm-transaction-payment"
+version = "0.1.1"
+dependencies = [
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "pallet-evm",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+ "up-sponsorship",
 ]
 
 [[package]]
@@ -9848,6 +9866,7 @@ dependencies = [
  "pallet-evm-coder-substrate",
  "pallet-evm-contract-helpers",
  "pallet-evm-precompile-simple",
+ "pallet-evm-transaction-payment",
  "pallet-message-queue",
  "pallet-preimage",
  "pallet-session",
@@ -9887,6 +9906,7 @@ dependencies = [
  "substrate-wasm-builder",
  "up-common",
  "up-data-structs",
+ "up-sponsorship",
 ]
 
 [[package]]
@@ -14356,6 +14376,14 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "up-sponsorship"
+version = "0.1.0"
+source = "git+https://github.com/uniquenetwork/pallet-sponsoring?branch=polkadot-v1.9.0#f61acb0c67e58e16f9a4d9ab3a82b5cac1a5bede"
+dependencies = [
+ "impl-trait-for-tuples",
 ]
 
 [[package]]

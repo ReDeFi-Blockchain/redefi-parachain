@@ -17,7 +17,7 @@
 use sp_core::H160;
 use sp_runtime::{
 	traits::{DispatchInfoOf, Dispatchable, PostDispatchInfoOf},
-	transaction_validity::{InvalidTransaction, TransactionValidity, TransactionValidityError},
+	transaction_validity::{TransactionValidity, TransactionValidityError},
 };
 
 use crate::{RuntimeCall, RuntimeOrigin};

@@ -199,11 +199,13 @@ pallet-evm = { workspace = true }
 pallet-evm-assets = { workspace = true }
 pallet-evm-coder-substrate = { workspace = true }
 pallet-evm-contract-helpers = { workspace = true }
+pallet-evm-transaction-payment = { workspace = true }
 pallet-evm-precompile-simple = { workspace = true }
 precompile-utils-macro = { workspace = true }
 scale-info = { workspace = true }
 up-common = { workspace = true }
 up-data-structs = { workspace = true }
+up-sponsorship = { workspace = true }
 
 ################################################################################
 # Optional dependencies

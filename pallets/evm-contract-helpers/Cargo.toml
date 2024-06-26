@@ -13,12 +13,16 @@ frame-system = { workspace = true }
 sp-core = { workspace = true }
 sp-std = { workspace = true }
 
+# Unique
+up-sponsorship = { workspace = true }
+
 # Redefi
 pallet-evm = { workspace = true }
 
 # Locals
 evm-coder = { workspace = true }
 pallet-evm-coder-substrate = { workspace = true }
+pallet-evm-transaction-payment = { workspace = true }
 parity-scale-codec = { workspace = true }
 up-data-structs = { workspace = true, features = ['serde1'] }
 
