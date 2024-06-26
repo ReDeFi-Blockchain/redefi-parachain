@@ -35,7 +35,6 @@ use pallet_evm_coder_substrate::{
 	frontier_contract, SubstrateRecorder, WithRecorder,
 };
 use sp_core::H160;
-use up_sponsorship::SponsorshipHandler;
 
 use crate::{AllowlistEnabled, Config, Owner, Pallet};
 

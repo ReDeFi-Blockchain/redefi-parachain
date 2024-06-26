@@ -20,15 +20,14 @@
 
 use core::marker::PhantomData;
 
-use fp_evm::{CheckEvmTransaction, FeeCalculator, TransactionValidationError, WithdrawReason};
+use fp_evm::{CheckEvmTransaction, TransactionValidationError, WithdrawReason};
 use frame_support::{
 	storage::with_transaction,
-	traits::{Currency, Imbalance, IsSubType, OnUnbalanced},
+	traits::{Currency, Imbalance, OnUnbalanced},
 };
 pub use pallet::*;
 use pallet_evm::{
-	account::CrossAccountId, EnsureAddressOrigin, NegativeImbalanceOf, OnChargeEVMTransaction,
-	OnCheckEvmTransaction,
+	account::CrossAccountId, NegativeImbalanceOf, OnChargeEVMTransaction, OnCheckEvmTransaction,
 };
 use sp_core::{H160, U256};
 use sp_runtime::{traits::UniqueSaturatedInto, DispatchError, TransactionOutcome};

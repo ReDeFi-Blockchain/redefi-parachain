@@ -23,10 +23,6 @@ pub mod runtime_apis;
 #[cfg(test)]
 pub mod tests;
 
-use frame_support::{
-	traits::{Currency, Imbalance, OnUnbalanced},
-	weights::Weight,
-};
 use sp_runtime::{
 	generic, impl_opaque_keys,
 	traits::{BlakeTwo256, BlockNumberProvider},

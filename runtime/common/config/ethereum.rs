@@ -5,7 +5,7 @@ use frame_support::{
 	ConsensusEngineId,
 };
 use pallet_ethereum::PostLogContent;
-use pallet_evm::{EVMCurrencyAdapter, EnsureAddressTruncated, HashedAddressMapping};
+use pallet_evm::{EnsureAddressTruncated, HashedAddressMapping};
 use scale_info::prelude::string::{String, ToString};
 use sp_core::{H160, U256};
 use sp_runtime::{traits::ConstU32, Perbill, RuntimeAppPublic};
@@ -13,7 +13,7 @@ use sp_std::collections::btree_map::BTreeMap;
 use staging_xcm::prelude::*;
 use up_common::constants::*;
 
-use super::{substrate::TreasuryAccount, xcm::RelayLocation};
+use super::xcm::RelayLocation;
 use crate::{
 	runtime_common::{
 		ethereum::{
