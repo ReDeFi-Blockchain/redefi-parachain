@@ -16,7 +16,9 @@ use up_common::constants::*;
 use super::{substrate::TreasuryAccount, xcm::RelayLocation};
 use crate::{
 	runtime_common::{
-		ethereum::{precompiles::UniquePrecompiles, sponsoring::RedefiEthSponsorshipHandler},
+		ethereum::{
+			precompiles::UniquePrecompiles, sponsoring::EthCrossChainTransferSponsorshipHandler,
+		},
 		DealWithFees,
 	},
 	Aura, Balances, ChainId, Runtime, RuntimeEvent, DECIMALS, TOKEN_SYMBOL, VERSION,
@@ -137,7 +139,7 @@ impl pallet_evm_contract_helpers::Config for Runtime {
 impl pallet_evm_coder_substrate::Config for Runtime {}
 
 impl pallet_evm_transaction_payment::Config for Runtime {
-	type EvmSponsorshipHandler = RedefiEthSponsorshipHandler<Self>;
+	type EvmSponsorshipHandler = EthCrossChainTransferSponsorshipHandler<Self>;
 }
 
 parameter_types! {

@@ -166,7 +166,7 @@ impl<T: Config> OnCheckEvmTransaction<T> for TransactionValidity<T> {
 /// `OnUnbalanced`).
 /// Similar to `CurrencyAdapter` of `pallet_transaction_payment`
 pub struct WrappedEVMCurrencyAdapter<C, OU>(sp_std::marker::PhantomData<(C, OU)>);
-impl<T, C, OU> OnChargeEVMTransaction<T> for WrappedEVMCurrencyAdapter<C, OU>
+impl<T, C, Treasury> OnChargeEVMTransaction<T> for WrappedEVMCurrencyAdapter<C, Treasury>
 where
 	T: Config,
 	C: Currency<<T as frame_system::Config>::AccountId>,
@@ -178,7 +178,7 @@ where
 		<C as Currency<<T as frame_system::Config>::AccountId>>::Balance,
 		Opposite = C::PositiveImbalance,
 	>,
-	OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
+	Treasury: OnUnbalanced<NegativeImbalanceOf<C, T>>,
 	U256: UniqueSaturatedInto<<C as Currency<<T as frame_system::Config>::AccountId>>::Balance>,
 {
 	// Kept type as Option to satisfy bound of Default
@@ -208,7 +208,7 @@ where
 		};
 
 		let who = sponsor.as_ref().unwrap_or(who);
-		<pallet_evm::EVMCurrencyAdapter<C, OU> as OnChargeEVMTransaction<T>>::withdraw_fee(
+		<pallet_evm::EVMCurrencyAdapter<C, Treasury> as OnChargeEVMTransaction<T>>::withdraw_fee(
 			who, reason, fee,
 		)
 		.map(|li| (li, sponsor))
@@ -223,7 +223,7 @@ where
 		let (already_withdrawn, sponsor) = already_withdrawn;
 		let who = sponsor.as_ref().unwrap_or(who);
 		(
-			<pallet_evm::EVMCurrencyAdapter<C, OU> as OnChargeEVMTransaction<T>>::correct_and_deposit_fee(
+			<pallet_evm::EVMCurrencyAdapter<C, Treasury> as OnChargeEVMTransaction<T>>::correct_and_deposit_fee(
 				who,
 				corrected_fee,
 				base_fee,
@@ -234,8 +234,7 @@ where
 	}
 
 	fn pay_priority_fee(tip: Self::LiquidityInfo) {
-		<pallet_evm::EVMCurrencyAdapter<C, OU> as OnChargeEVMTransaction<T>>::pay_priority_fee(
-			tip.0,
-		)
+		let (Some(imbalance), _) = tip else { return };
+		Treasury::on_unbalanced(imbalance)
 	}
 }

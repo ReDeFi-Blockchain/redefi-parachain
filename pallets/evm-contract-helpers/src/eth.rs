@@ -34,7 +34,6 @@ use pallet_evm_coder_substrate::{
 	execution::{PreDispatch, Result},
 	frontier_contract, SubstrateRecorder, WithRecorder,
 };
-use pallet_evm_transaction_payment::CallContext;
 use sp_core::H160;
 use up_sponsorship::SponsorshipHandler;
 
