@@ -468,9 +468,7 @@ where
 				eth_pubsub_notification_sinks,
 				overrides,
 				sync: sync_service.clone(),
-				pending_create_inherent_data_providers: |_, ()| async move {
-					Ok(ethereum_parachain_inherent())
-				},
+				pending_create_inherent_data_providers: |_, ()| async move { Ok(()) },
 			};
 
 			create_eth::<
@@ -1010,9 +1008,7 @@ where
 				overrides,
 				sync: sync_service.clone(),
 				// We don't have any inherents except parachain built-ins, which we can't even extract from inside `run_aura`.
-				pending_create_inherent_data_providers: |_, ()| async move {
-					Ok(ethereum_parachain_inherent())
-				},
+				pending_create_inherent_data_providers: |_, ()| async move { Ok(()) },
 			};
 
 			create_eth::<
