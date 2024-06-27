@@ -23,10 +23,6 @@ pub mod runtime_apis;
 #[cfg(test)]
 pub mod tests;
 
-use frame_support::{
-	traits::{Currency, Imbalance, OnUnbalanced},
-	weights::Weight,
-};
 use sp_runtime::{
 	generic, impl_opaque_keys,
 	traits::{BlakeTwo256, BlockNumberProvider},
@@ -105,23 +101,7 @@ pub type Executive = frame_executive::Executive<
 	Migrations,
 >;
 
-type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
-
-pub struct DealWithFees;
-impl OnUnbalanced<NegativeImbalance> for DealWithFees {
-	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance>) {
-		if let Some(fees) = fees_then_tips.next() {
-			// for fees, 100% to treasury
-			let mut split = fees.ration(100, 0);
-			if let Some(tips) = fees_then_tips.next() {
-				// for tips, if any, 100% to treasury
-				tips.ration_merge_into(100, 0, &mut split);
-			}
-			Treasury::on_unbalanced(split.0);
-			// Author::on_unbalanced(split.1);
-		}
-	}
-}
+pub type DealWithFees = Treasury;
 
 pub struct RelayChainBlockNumberProvider<T>(sp_std::marker::PhantomData<T>);
 

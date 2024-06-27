@@ -28,6 +28,7 @@ evm-coder = { version = "0.4.3", default-features = false }
 pallet-balances-adapter = { path = "pallets/balances-adapter", default-features = false }
 pallet-evm-assets = { default-features = false, path = "pallets/evm-assets" }
 pallet-evm-coder-substrate = { default-features = false, path = "pallets/evm-coder-substrate" }
+pallet-evm-transaction-payment = { path = "pallets/evm-transaction-payment", default-features = false }
 pallet-evm-contract-helpers = { path = "pallets/evm-contract-helpers", default-features = false }
 precompile-utils-macro = { path = "runtime/common/ethereum/precompiles/utils/macro" }
 uc-rpc = { path = "client/rpc" }
@@ -36,6 +37,9 @@ up-data-structs = { path = "primitives/data-structs", default-features = false }
 
 # Redefi: Runtimes
 redefi-runtime = { path = "runtime/redefi" }
+
+# Unique
+up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v1.9.0" }
 
 # Frontier (Unique patches over the Parity version)
 fc-api = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.9.0" }
@@ -77,6 +81,7 @@ cumulus-primitives-utility = { default-features = false, version = "0.10.0" }
 cumulus-relay-chain-inprocess-interface = "0.10.0"
 cumulus-relay-chain-interface = "0.10.0"
 cumulus-relay-chain-minimal-node = "0.10.0"
+cumulus-test-relay-sproof-builder = "0.10.0"
 frame-executive = { default-features = false, version = "31.0.0" }
 frame-support = { default-features = false, version = "31.0.0" }
 frame-system = { default-features = false, version = "31.0.0" }

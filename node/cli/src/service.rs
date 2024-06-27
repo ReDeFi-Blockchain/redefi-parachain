@@ -30,12 +30,14 @@ use cumulus_client_consensus_aura::collators::basic::{
 };
 use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImport;
 use cumulus_client_consensus_proposer::Proposer;
+use cumulus_client_parachain_inherent::ParachainInherentData;
 use cumulus_client_service::{
 	build_relay_chain_interface, prepare_node_config, start_relay_chain_tasks, storage_proof_size,
 	DARecoveryProfile, StartRelayChainTasksParams,
 };
 use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_interface::{OverseerHandle, RelayChainInterface};
+use cumulus_test_relay_sproof_builder::RelayStateSproofBuilder;
 use fc_mapping_sync::{kv::MappingSyncWorker, EthereumBlockNotificationSinks, SyncStrategy};
 use fc_rpc::{
 	frontier_backend_client::SystemAccountId32StorageOverride, EthBlockDataCacheTask, EthConfig,
@@ -51,6 +53,7 @@ use futures::{
 	Stream, StreamExt,
 };
 use jsonrpsee::RpcModule;
+use polkadot_primitives::PersistedValidationData;
 use polkadot_service::CollatorPair;
 use sc_client_api::{
 	backend::StateBackend, AuxStore, Backend, BlockOf, BlockchainEvents, StorageProvider,
@@ -171,6 +174,28 @@ ez_bounds!(
 	{
 	}
 );
+
+fn ethereum_parachain_inherent() -> (sp_timestamp::InherentDataProvider, ParachainInherentData) {
+	let (relay_parent_storage_root, relay_chain_state) =
+		RelayStateSproofBuilder::default().into_state_root_and_proof();
+	let vfp = PersistedValidationData {
+		// This is a hack to make `cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases`
+		// happy. Relay parent number can't be bigger than u32::MAX.
+		relay_parent_number: u32::MAX,
+		relay_parent_storage_root,
+		..Default::default()
+	};
+
+	(
+		sp_timestamp::InherentDataProvider::from_system_time(),
+		ParachainInherentData {
+			validation_data: vfp,
+			relay_chain_state,
+			downward_messages: Default::default(),
+			horizontal_messages: Default::default(),
+		},
+	)
+}
 
 /// Starts a `ServiceBuilder` for a full service.
 ///
@@ -362,10 +387,6 @@ where
 			block_relay: None,
 		})?;
 
-	let select_chain = params.select_chain.clone();
-
-	let runtime_id = parachain_config.chain_spec.runtime_id();
-
 	// Frontier
 	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
 	let fee_history_limit = 2048;
@@ -415,9 +436,7 @@ where
 				fee_history_cache,
 				eth_block_data_cache,
 				network,
-				runtime_id,
 				transaction_pool,
-				select_chain,
 				overrides,
 			);
 
@@ -425,14 +444,11 @@ where
 
 			let full_deps = FullDeps {
 				client: client.clone(),
-				runtime_id,
-
 				deny_unsafe,
 				pool: transaction_pool.clone(),
-				select_chain,
 			};
 
-			create_full::<_, _, _, Runtime, _>(&mut rpc_handle, full_deps)?;
+			create_full::<_, _, Runtime, _>(&mut rpc_handle, full_deps)?;
 
 			let eth_deps = EthDeps {
 				client,
@@ -452,7 +468,9 @@ where
 				eth_pubsub_notification_sinks,
 				overrides,
 				sync: sync_service.clone(),
-				pending_create_inherent_data_providers: |_, ()| async move { Ok(()) },
+				pending_create_inherent_data_providers: |_, ()| async move {
+					Ok(ethereum_parachain_inherent())
+				},
 			};
 
 			create_eth::<
@@ -909,8 +927,6 @@ where
 		);
 	}
 
-	let runtime_id = config.chain_spec.runtime_id();
-
 	// Frontier
 	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
 	let fee_history_limit = 2048;
@@ -960,25 +976,20 @@ where
 				fee_history_cache,
 				eth_block_data_cache,
 				network,
-				runtime_id,
 				transaction_pool,
-				select_chain,
 				overrides,
 			);
 
 			let mut rpc_module = RpcModule::new(());
 
 			let full_deps = FullDeps {
-				runtime_id,
-
 				// eth_backend,
 				deny_unsafe,
 				client: client.clone(),
 				pool: transaction_pool.clone(),
-				select_chain,
 			};
 
-			create_full::<_, _, _, Runtime, _>(&mut rpc_module, full_deps)?;
+			create_full::<_, _, Runtime, _>(&mut rpc_module, full_deps)?;
 
 			let eth_deps = EthDeps {
 				client,
@@ -999,7 +1010,9 @@ where
 				overrides,
 				sync: sync_service.clone(),
 				// We don't have any inherents except parachain built-ins, which we can't even extract from inside `run_aura`.
-				pending_create_inherent_data_providers: |_, ()| async move { Ok(()) },
+				pending_create_inherent_data_providers: |_, ()| async move {
+					Ok(ethereum_parachain_inherent())
+				},
 			};
 
 			create_eth::<
