@@ -257,10 +257,7 @@ impl pallet_aura::Config for Runtime {
 	type AllowMultipleBlocksPerSlot = ConstBool<true>;
 }
 
-impl pallet_trusted_authorities::Config for Runtime {
-	type AuthorityId = <Self as pallet_aura::Config>::AuthorityId;
-	type MaxAuthorities = <Self as pallet_aura::Config>::MaxAuthorities;
-}
+impl pallet_private_balances_aura_ext::Config for Runtime {}
 
 impl pallet_utility::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;

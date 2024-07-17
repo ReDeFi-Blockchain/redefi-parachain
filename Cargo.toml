@@ -37,7 +37,7 @@ precompile-utils-macro = { path = "runtime/common/ethereum/precompiles/utils/mac
 uc-rpc = { path = "client/rpc" }
 up-common = { path = "primitives/common", default-features = false }
 up-data-structs = { path = "primitives/data-structs", default-features = false }
-pallet-trusted-authorities = { path = "pallets/trusted-authorities", default-features = false }
+pallet-private-balances-aura-ext = { path = "pallets/private-balances-aura-ext", default-features = false }
 
 # Redefi: Runtimes
 redefi-runtime = { path = "runtime/redefi" }
