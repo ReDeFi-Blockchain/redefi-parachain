@@ -248,6 +248,7 @@ impl pallet_sudo::Config for Runtime {
 
 parameter_types! {
 	pub const MaxAuthorities: u32 = 100_000;
+	pub const TrustedCollatorsPeriod: u32 = 2;
 }
 
 impl pallet_aura::Config for Runtime {
@@ -257,7 +258,9 @@ impl pallet_aura::Config for Runtime {
 	type AllowMultipleBlocksPerSlot = ConstBool<true>;
 }
 
-impl pallet_private_balances_aura_ext::Config for Runtime {}
+impl pallet_private_balances_aura_ext::Config for Runtime {
+	type TrustedCollatorsPeriod = TrustedCollatorsPeriod;
+}
 
 impl pallet_utility::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
