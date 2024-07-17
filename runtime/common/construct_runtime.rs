@@ -27,6 +27,7 @@ macro_rules! construct_runtime {
 
 				Aura: pallet_aura = 25,
 				AuraExt: cumulus_pallet_aura_ext = 26,
+				TrustedAuthorities: pallet_trusted_authorities = 27,
 
 				Balances: pallet_balances = 30,
 

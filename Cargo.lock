@@ -7525,6 +7525,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-trusted-authorities"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-utility"
 version = "31.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9856,6 +9870,7 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
+ "pallet-trusted-authorities",
  "pallet-utility",
  "pallet-xcm",
  "parity-scale-codec",

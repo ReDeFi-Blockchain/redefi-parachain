@@ -59,6 +59,7 @@ std = [
 	'frame-system/std',
 	'frame-try-runtime/std',
 	'pallet-aura/std',
+	'pallet-trusted-authorities/std',
 	'pallet-balances-adapter/std',
 	'pallet-balances/std',
 	'pallet-base-fee/std',
@@ -200,6 +201,7 @@ pallet-evm-assets = { workspace = true }
 pallet-evm-coder-substrate = { workspace = true }
 pallet-evm-contract-helpers = { workspace = true }
 pallet-evm-precompile-simple = { workspace = true }
+pallet-trusted-authorities = { workspace = true }
 precompile-utils-macro = { workspace = true }
 scale-info = { workspace = true }
 up-common = { workspace = true }
