@@ -7,7 +7,10 @@ use alloc::vec::Vec;
 use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::BlockNumberFor;
 pub use pallet::*;
-use sp_runtime::BoundedSlice;
+use sp_runtime::{
+	traits::{One, Zero},
+	BoundedSlice,
+};
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -84,16 +87,15 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_initialize(n: BlockNumberFor<T>) -> Weight {
-			let zero: BlockNumberFor<T> = BlockNumberFor::<T>::default();
+		fn on_finalize(current: BlockNumberFor<T>) {
+			let next = current + BlockNumberFor::<T>::one();
+			let zero = BlockNumberFor::<T>::zero();
 
-			if n != zero && n % T::TrustedCollatorsPeriod::get() == zero {
+			if next % T::TrustedCollatorsPeriod::get() == zero {
 				pallet_aura::Pallet::<T>::change_authorities(<TrustedAuthorities<T>>::get());
 			} else {
 				pallet_aura::Pallet::<T>::change_authorities(<Authorities<T>>::get());
 			}
-
-			T::DbWeight::get().reads_writes(1, 1)
 		}
 	}
 }
