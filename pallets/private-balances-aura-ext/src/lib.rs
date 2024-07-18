@@ -20,6 +20,9 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_aura::Config {
+		/// Who can call `setTrustedAuthorities` extrinsic.
+		type TrustedCollatorsOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+
 		/// Once every `TrustedCollatorsPeriod` blocks will be
 		/// used a vector of trusted collators.
 		///
@@ -84,6 +87,22 @@ pub mod pallet {
 				.expect("Initial trusted authority set must be less than T::MaxAuthorities");
 
 			<TrustedAuthorities<T>>::put(bounded);
+		}
+	}
+
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
+		#[pallet::call_index(0)]
+		#[pallet::weight(10)]
+		pub fn set_trusted_authorities(
+			origin: T::RuntimeOrigin,
+			authorities: BoundedVec<T::AuthorityId, T::MaxAuthorities>,
+		) -> DispatchResult {
+			T::TrustedCollatorsOrigin::ensure_origin(origin)?;
+
+			<TrustedAuthorities<T>>::put(authorities);
+
+			Ok(())
 		}
 	}
 
