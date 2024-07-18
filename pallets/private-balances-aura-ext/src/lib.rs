@@ -4,13 +4,15 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use frame_support::pallet_prelude::*;
-use frame_system::pallet_prelude::BlockNumberFor;
+use frame_support::{pallet_prelude::*, traits::OnRuntimeUpgrade};
+use frame_system::{pallet_prelude::*, RawOrigin};
 pub use pallet::*;
 use sp_runtime::{
 	traits::{One, Zero},
 	BoundedSlice,
 };
+
+pub mod migration;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -52,7 +54,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	impl<T: Config> Pallet<T> {
-		fn initialize_authorities(authorities: &[T::AuthorityId]) {
+		pub(crate) fn initialize_authorities(authorities: &[T::AuthorityId]) {
 			if authorities.is_empty() {
 				return;
 			}
@@ -68,7 +70,7 @@ pub mod pallet {
 			<Authorities<T>>::put(bounded);
 		}
 
-		fn initialize_trusted_authorities(authorities: &[T::AuthorityId]) {
+		pub(crate) fn initialize_trusted_authorities(authorities: &[T::AuthorityId]) {
 			if authorities.is_empty() {
 				return;
 			}
@@ -92,6 +94,7 @@ pub mod pallet {
 			let zero = BlockNumberFor::<T>::zero();
 
 			if next % T::TrustedCollatorsPeriod::get() == zero {
+				// If TrustedAuthorities is empty, change_authorities does nothing.
 				pallet_aura::Pallet::<T>::change_authorities(<TrustedAuthorities<T>>::get());
 			} else {
 				pallet_aura::Pallet::<T>::change_authorities(<Authorities<T>>::get());

@@ -85,14 +85,19 @@ pub type SignedExtra = (
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
 );
+
 pub type Migrations = migrations::Unreleased;
+
 /// The runtime migrations per release.
 #[allow(deprecated, missing_docs)]
 pub mod migrations {
 	use super::*;
 
 	/// Unreleased migrations. Add new ones here:
-	pub type Unreleased = (pallet_evm_assets::migration::FixBaxMeta<Runtime>,);
+	pub type Unreleased = (
+		pallet_evm_assets::migration::FixBaxMeta<Runtime>,
+		pallet_private_balances_aura_ext::migration::UpdateAuthorities<Runtime>,
+	);
 }
 
 /// Executive: handles dispatch to the various modules.
