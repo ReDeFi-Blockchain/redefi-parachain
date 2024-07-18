@@ -26,14 +26,14 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_aura::Config {
 		/// Who can call `setTrustedAuthorities` extrinsic.
-		type TrustedCollatorsOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		type TrustedAuthoritiesOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
-		/// Once every `TrustedCollatorsPeriod` blocks will be
-		/// used a vector of trusted collators.
+		/// Once every `TrustedAuthoritiesPeriod` blocks will be
+		/// used a vector of trusted authorities.
 		///
-		/// For example. If `TrustedCollatorsPeriod` is equal 2 then
-		/// a vector of trusted collators will be used every even block.
-		type TrustedCollatorsPeriod: Get<BlockNumberFor<Self>>;
+		/// For example. If `TrustedAuthoritiesPeriod` is equal 2 then
+		/// a vector of trusted authorities will be used every even block.
+		type TrustedAuthoritiesPeriod: Get<BlockNumberFor<Self>>;
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
@@ -106,7 +106,7 @@ pub mod pallet {
 			origin: T::RuntimeOrigin,
 			authorities: BoundedVec<T::AuthorityId, T::MaxAuthorities>,
 		) -> DispatchResult {
-			T::TrustedCollatorsOrigin::ensure_origin(origin)?;
+			T::TrustedAuthoritiesOrigin::ensure_origin(origin)?;
 
 			<TrustedAuthorities<T>>::put(authorities);
 
@@ -120,7 +120,7 @@ pub mod pallet {
 			let next = current + BlockNumberFor::<T>::one();
 			let zero = BlockNumberFor::<T>::zero();
 
-			if next % T::TrustedCollatorsPeriod::get() == zero {
+			if next % T::TrustedAuthoritiesPeriod::get() == zero {
 				// If TrustedAuthorities is empty, change_authorities does nothing.
 				pallet_aura::Pallet::<T>::change_authorities(<TrustedAuthorities<T>>::get());
 			} else {
