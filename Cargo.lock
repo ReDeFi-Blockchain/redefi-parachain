@@ -7161,6 +7161,7 @@ dependencies = [
 name = "pallet-private-balances-aura-ext"
 version = "0.1.0"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "pallet-aura",
@@ -7170,6 +7171,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "sp-weights",
 ]
 
 [[package]]

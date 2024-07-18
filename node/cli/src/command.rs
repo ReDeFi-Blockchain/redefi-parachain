@@ -303,7 +303,7 @@ pub fn run() -> Result<()> {
 			use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 			use polkadot_cli::Block;
 
-			use crate::HostFunctions;
+			use crate::service::HostFunctions;
 
 			let runner = cli.create_runner(cmd)?;
 			// Switch on the concrete benchmark sub-command-

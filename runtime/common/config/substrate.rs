@@ -261,6 +261,7 @@ impl pallet_aura::Config for Runtime {
 impl pallet_private_balances_aura_ext::Config for Runtime {
 	type TrustedCollatorsOrigin = EnsureRoot<Self::AccountId>;
 	type TrustedCollatorsPeriod = TrustedCollatorsPeriod;
+	type WeightInfo = pallet_private_balances_aura_ext::weights::SubstrateWeight<Self>;
 }
 
 impl pallet_utility::Config for Runtime {

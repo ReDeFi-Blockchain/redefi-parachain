@@ -11,8 +11,13 @@ use sp_runtime::{
 	traits::{One, Zero},
 	BoundedSlice,
 };
+use weights::WeightInfo;
 
 pub mod migration;
+pub mod weights;
+
+#[cfg(feature = "runtime-benchmarks")]
+pub mod benchmarking;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -29,6 +34,9 @@ pub mod pallet {
 		/// For example. If `TrustedCollatorsPeriod` is equal 2 then
 		/// a vector of trusted collators will be used every even block.
 		type TrustedCollatorsPeriod: Get<BlockNumberFor<Self>>;
+
+		/// Weight information for extrinsics in this pallet.
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::storage]
@@ -93,7 +101,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
-		#[pallet::weight(10)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_trusted_authorities())]
 		pub fn set_trusted_authorities(
 			origin: T::RuntimeOrigin,
 			authorities: BoundedVec<T::AuthorityId, T::MaxAuthorities>,

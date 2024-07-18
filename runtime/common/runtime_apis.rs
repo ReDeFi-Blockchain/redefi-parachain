@@ -368,6 +368,8 @@ macro_rules! impl_common_runtime_apis {
 
 					let mut list = Vec::<BenchmarkList>::new();
 
+					list_benchmark!(list, extra, pallet_private_balances_aura_ext, PrivateBalancesAuraExt);
+
 					let storage_info = AllPalletsWithSystem::storage_info();
 
 					return (list, storage_info)
@@ -402,7 +404,10 @@ macro_rules! impl_common_runtime_apis {
 					let mut batches = Vec::<BenchmarkBatch>::new();
 					let params = (&config, &allowlist);
 
+					add_benchmark!(params, batches, pallet_private_balances_aura_ext, PrivateBalancesAuraExt);
+
 					if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
+
 					Ok(batches)
 				}
 			}
