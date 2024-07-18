@@ -42,6 +42,8 @@ std = [
 	"pallet-preimage/std",
 	"pallet-session/std",
 	"pallet-xcm/std",
+  	"frame-benchmarking/std",
+	"frame-system-benchmarking/std",
 	"sp-consensus-aura/std",
 	'cumulus-pallet-aura-ext/std',
 	'cumulus-pallet-parachain-system/std',
