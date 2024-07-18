@@ -307,9 +307,9 @@ pub fn run() -> Result<()> {
 			let runner = cli.create_runner(cmd)?;
 			// Switch on the concrete benchmark sub-command-
 			match cmd {
-				BenchmarkCmd::Pallet(cmd) => {
-					runner.sync_run(|config| cmd.run::<Block, SubstrateHostFunctions>(config))
-				}
+				BenchmarkCmd::Pallet(cmd) => runner.sync_run(|config| {
+					cmd.run::<sp_runtime::traits::HashingFor<Block>, SubstrateHostFunctions>(config)
+				}),
 				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
 					let partials = new_partial::<
 						redefi_runtime::Runtime,
