@@ -303,13 +303,13 @@ pub fn run() -> Result<()> {
 			use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 			use polkadot_cli::Block;
 
-			use crate::service::HostFunctions;
+			use crate::service::ExtendHostFunctions;
 
 			let runner = cli.create_runner(cmd)?;
 			// Switch on the concrete benchmark sub-command-
 			match cmd {
 				BenchmarkCmd::Pallet(cmd) => runner.sync_run(|config| {
-					cmd.run::<sp_runtime::traits::HashingFor<Block>, HostFunctions>(config)
+					cmd.run::<sp_runtime::traits::HashingFor<Block>, ExtendHostFunctions>(config)
 				}),
 				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
 					let partials = new_partial::<
@@ -373,12 +373,10 @@ pub fn run() -> Result<()> {
 				Ok((
 					match config.chain_spec.runtime_id() {
 						#[cfg(feature = "redefi-runtime")]
-						RuntimeId::Redefi => Box::pin(
-							cmd
-								.run::<Block, <RedefiRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions, _>(
-								info_provider,
-							),
-						),
+						RuntimeId::Redefi => Box::pin(cmd.run::<Block, ExtendedHostFunctions<
+							sp_io::SubstrateHostFunctions,
+							<RedefiRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions,
+						>, _>(info_provider)),
 						runtime_id => return Err(no_runtime_err!(runtime_id).into()),
 					},
 					task_manager,

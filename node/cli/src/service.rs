@@ -78,14 +78,10 @@ use up_common::types::{opaque::*, Nonce};
 use crate::rpc::{create_eth, create_full, EthDeps, FullDeps};
 
 #[cfg(not(feature = "runtime-benchmarks"))]
-pub type HostFunctions = (
-	sp_io::SubstrateHostFunctions,
-	cumulus_client_service::storage_proof_size::HostFunctions,
-);
+pub type ExtendHostFunctions = cumulus_client_service::storage_proof_size::HostFunctions;
 
 #[cfg(feature = "runtime-benchmarks")]
-pub type HostFunctions = (
-	sp_io::SubstrateHostFunctions,
+pub type ExtendHostFunctions = (
 	cumulus_client_service::storage_proof_size::HostFunctions,
 	frame_benchmarking::benchmarking::HostFunctions,
 );
@@ -96,7 +92,7 @@ pub struct RedefiRuntimeExecutor;
 
 #[cfg(feature = "redefi-runtime")]
 impl NativeExecutionDispatch for RedefiRuntimeExecutor {
-	type ExtendHostFunctions = HostFunctions;
+	type ExtendHostFunctions = ExtendHostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		redefi_runtime::api::dispatch(method, data)
