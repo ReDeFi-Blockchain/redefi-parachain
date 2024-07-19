@@ -101,7 +101,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
-		#[pallet::weight(<T as Config>::WeightInfo::set_trusted_authorities())]
+		#[pallet::weight(<T as Config>::WeightInfo::set_trusted_authorities(authorities.len() as u32))]
 		pub fn set_trusted_authorities(
 			origin: T::RuntimeOrigin,
 			authorities: BoundedVec<T::AuthorityId, T::MaxAuthorities>,

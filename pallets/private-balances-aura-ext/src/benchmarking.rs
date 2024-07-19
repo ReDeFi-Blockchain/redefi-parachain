@@ -2,27 +2,21 @@ use frame_benchmarking::v2::*;
 
 use super::*;
 
-#[benchmarks(
-    where
-        // TODO: Can we use less ugly way to create Config::AuthorityId?
-        for<'a> T::AuthorityId: TryFrom<&'a [u8]>,
-        for<'a> <T::AuthorityId as TryFrom<&'a [u8]>>::Error: core::fmt::Debug,
-)]
+#[benchmarks]
 mod benchmarks {
 	use super::*;
 
 	#[benchmark]
-	fn set_trusted_authorities() -> Result<(), BenchmarkError> {
-		let origin = RawOrigin::Root.into();
+	fn set_trusted_authorities(b: Linear<0, 100_000>) -> Result<(), BenchmarkError> {
+		let authority = T::AuthorityId::decode(&mut [0u8; 32].as_slice())
+			.expect("T::AuthorityId decode should be successful");
 
-		let public_key = [0u8; 32].as_slice();
-		let authority = T::AuthorityId::try_from(public_key).unwrap();
-		let authorities = alloc::vec![authority].try_into().unwrap();
+		let authorities = alloc::vec![authority; b as usize]
+			.try_into()
+			.expect("authorities length should be smaller or equal T::MaxAuthorities. Please check values in Linear<.., ..>");
 
-		#[block]
-		{
-			<Pallet<T>>::set_trusted_authorities(origin, authorities)?;
-		}
+		#[extrinsic_call]
+		_(RawOrigin::Root, authorities);
 
 		Ok(())
 	}
