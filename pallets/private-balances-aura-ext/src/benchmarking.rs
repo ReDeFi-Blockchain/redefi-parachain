@@ -7,7 +7,7 @@ mod benchmarks {
 	use super::*;
 
 	#[benchmark]
-	fn set_authorities(b: Linear<0, 100_000>) -> Result<(), BenchmarkError> {
+	fn set_authorities(b: Linear<1, 100_000>) -> Result<(), BenchmarkError> {
 		let authority = T::AuthorityId::decode(&mut [0u8; 32].as_slice())
 			.expect("T::AuthorityId decode should be successful");
 
