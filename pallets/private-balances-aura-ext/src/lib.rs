@@ -25,8 +25,8 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_aura::Config {
-		/// Who can call `setTrustedAuthorities` extrinsic.
-		type TrustedAuthoritiesOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		/// Who can call `setAuthorities` and `setTrustedAuthorities` extrinsics.
+		type AuthoritiesOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		/// Once every `TrustedAuthoritiesPeriod` blocks will be
 		/// used a vector of trusted authorities.
@@ -101,12 +101,25 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_authorities(authorities.len() as u32))]
+		pub fn set_authorities(
+			origin: T::RuntimeOrigin,
+			authorities: BoundedVec<T::AuthorityId, T::MaxAuthorities>,
+		) -> DispatchResult {
+			T::AuthoritiesOrigin::ensure_origin(origin)?;
+
+			<Authorities<T>>::put(authorities);
+
+			Ok(())
+		}
+
+		#[pallet::call_index(1)]
 		#[pallet::weight(<T as Config>::WeightInfo::set_trusted_authorities(authorities.len() as u32))]
 		pub fn set_trusted_authorities(
 			origin: T::RuntimeOrigin,
 			authorities: BoundedVec<T::AuthorityId, T::MaxAuthorities>,
 		) -> DispatchResult {
-			T::TrustedAuthoritiesOrigin::ensure_origin(origin)?;
+			T::AuthoritiesOrigin::ensure_origin(origin)?;
 
 			<TrustedAuthorities<T>>::put(authorities);
 

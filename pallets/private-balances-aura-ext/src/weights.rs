@@ -18,7 +18,7 @@
 // --pallet
 // pallet_private_balances_aura_ext
 // --extrinsic
-// set_trusted_authorities
+// *
 // --steps
 // 200
 // --repeat
@@ -36,12 +36,26 @@ use sp_std::marker::PhantomData;
 
 /// Weight functions needed for pallet_private_balances_aura_ext.
 pub trait WeightInfo {
+	fn set_authorities(b: u32, ) -> Weight;
 	fn set_trusted_authorities(b: u32, ) -> Weight;
 }
 
 /// Weights for pallet_private_balances_aura_ext using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
+	/// Storage: `PrivateBalancesAuraExt::Authorities` (r:0 w:1)
+	/// Proof: `PrivateBalancesAuraExt::Authorities` (`max_values`: Some(1), `max_size`: Some(3200004), added: 3200499, mode: `MaxEncodedLen`)
+	/// The range of component `b` is `[0, 100000]`.
+	fn set_authorities(b: u32, ) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `0`
+		//  Estimated: `0`
+		// Minimum execution time: 922_000 picoseconds.
+		Weight::from_parts(993_000, 0)
+			// Standard Error: 5
+			.saturating_add(Weight::from_parts(12_573, 0).saturating_mul(b.into()))
+			.saturating_add(T::DbWeight::get().writes(1_u64))
+	}
 	/// Storage: `PrivateBalancesAuraExt::TrustedAuthorities` (r:0 w:1)
 	/// Proof: `PrivateBalancesAuraExt::TrustedAuthorities` (`max_values`: Some(1), `max_size`: Some(3200004), added: 3200499, mode: `MaxEncodedLen`)
 	/// The range of component `b` is `[0, 100000]`.
@@ -49,16 +63,29 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `0`
 		//  Estimated: `0`
-		// Minimum execution time: 902_000 picoseconds.
-		Weight::from_parts(993_000, 0)
+		// Minimum execution time: 899_000 picoseconds.
+		Weight::from_parts(989_000, 0)
 			// Standard Error: 5
-			.saturating_add(Weight::from_parts(12_783, 0).saturating_mul(b.into()))
+			.saturating_add(Weight::from_parts(12_652, 0).saturating_mul(b.into()))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 }
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
+	/// Storage: `PrivateBalancesAuraExt::Authorities` (r:0 w:1)
+	/// Proof: `PrivateBalancesAuraExt::Authorities` (`max_values`: Some(1), `max_size`: Some(3200004), added: 3200499, mode: `MaxEncodedLen`)
+	/// The range of component `b` is `[0, 100000]`.
+	fn set_authorities(b: u32, ) -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `0`
+		//  Estimated: `0`
+		// Minimum execution time: 922_000 picoseconds.
+		Weight::from_parts(993_000, 0)
+			// Standard Error: 5
+			.saturating_add(Weight::from_parts(12_573, 0).saturating_mul(b.into()))
+			.saturating_add(RocksDbWeight::get().writes(1_u64))
+	}
 	/// Storage: `PrivateBalancesAuraExt::TrustedAuthorities` (r:0 w:1)
 	/// Proof: `PrivateBalancesAuraExt::TrustedAuthorities` (`max_values`: Some(1), `max_size`: Some(3200004), added: 3200499, mode: `MaxEncodedLen`)
 	/// The range of component `b` is `[0, 100000]`.
@@ -66,10 +93,10 @@ impl WeightInfo for () {
 		// Proof Size summary in bytes:
 		//  Measured:  `0`
 		//  Estimated: `0`
-		// Minimum execution time: 902_000 picoseconds.
-		Weight::from_parts(993_000, 0)
+		// Minimum execution time: 899_000 picoseconds.
+		Weight::from_parts(989_000, 0)
 			// Standard Error: 5
-			.saturating_add(Weight::from_parts(12_783, 0).saturating_mul(b.into()))
+			.saturating_add(Weight::from_parts(12_652, 0).saturating_mul(b.into()))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
 }
