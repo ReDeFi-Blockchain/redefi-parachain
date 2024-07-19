@@ -64,6 +64,12 @@ pub mod pallet {
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 
+	#[pallet::error]
+	pub enum Error<T> {
+		/// Authorities list can not be empty.
+		EmptyAuthorities,
+	}
+
 	impl<T: Config> Pallet<T> {
 		pub(crate) fn initialize_authorities(authorities: &[T::AuthorityId]) {
 			if authorities.is_empty() {
@@ -107,6 +113,8 @@ pub mod pallet {
 			authorities: BoundedVec<T::AuthorityId, T::MaxAuthorities>,
 		) -> DispatchResult {
 			T::AuthoritiesOrigin::ensure_origin(origin)?;
+
+			ensure!(!authorities.is_empty(), <Error<T>>::EmptyAuthorities);
 
 			<Authorities<T>>::put(authorities);
 
