@@ -2,15 +2,10 @@
 
 extern crate alloc;
 
-use alloc::vec::Vec;
-
 use frame_support::{pallet_prelude::*, traits::OnRuntimeUpgrade};
 use frame_system::{pallet_prelude::*, RawOrigin};
 pub use pallet::*;
-use sp_runtime::{
-	traits::{One, Zero},
-	BoundedSlice,
-};
+use sp_runtime::traits::{One, Zero};
 use weights::WeightInfo;
 
 pub mod migration;
@@ -18,6 +13,8 @@ pub mod weights;
 
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
+
+const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -50,18 +47,19 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	#[derive(frame_support::DefaultNoBound)]
 	pub struct GenesisConfig<T: Config> {
-		pub trusted_authorities: Vec<T::AuthorityId>,
+		pub trusted_authorities: BoundedVec<T::AuthorityId, T::MaxAuthorities>,
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
-			Pallet::<T>::initialize_authorities(&pallet_aura::Pallet::<T>::authorities());
-			Pallet::<T>::initialize_trusted_authorities(&self.trusted_authorities);
+			Pallet::<T>::initialize_authorities(pallet_aura::Pallet::<T>::authorities());
+			Pallet::<T>::initialize_trusted_authorities(self.trusted_authorities.clone());
 		}
 	}
 
 	#[pallet::pallet]
+	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::error]
@@ -71,36 +69,26 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub(crate) fn initialize_authorities(authorities: &[T::AuthorityId]) {
-			if authorities.is_empty() {
-				return;
-			}
-
+		pub(crate) fn initialize_authorities(
+			authorities: BoundedVec<T::AuthorityId, T::MaxAuthorities>,
+		) {
 			assert!(
 				<Authorities<T>>::get().is_empty(),
 				"Authorities are already initialized!"
 			);
 
-			let bounded = <BoundedSlice<'_, _, T::MaxAuthorities>>::try_from(authorities)
-				.expect("Initial authority set must be less than T::MaxAuthorities");
-
-			<Authorities<T>>::put(bounded);
+			<Authorities<T>>::put(authorities);
 		}
 
-		pub(crate) fn initialize_trusted_authorities(authorities: &[T::AuthorityId]) {
-			if authorities.is_empty() {
-				return;
-			}
-
+		pub(crate) fn initialize_trusted_authorities(
+			authorities: BoundedVec<T::AuthorityId, T::MaxAuthorities>,
+		) {
 			assert!(
 				<TrustedAuthorities<T>>::get().is_empty(),
 				"Trusted authorities are already initialized!"
 			);
 
-			let bounded = <BoundedSlice<'_, _, T::MaxAuthorities>>::try_from(authorities)
-				.expect("Initial trusted authority set must be less than T::MaxAuthorities");
-
-			<TrustedAuthorities<T>>::put(bounded);
+			<TrustedAuthorities<T>>::put(authorities);
 		}
 	}
 
