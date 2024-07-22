@@ -21,7 +21,9 @@ pub mod pallet {
 	use super::*;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_aura::Config {
+	pub trait Config:
+		frame_system::Config + pallet_aura::Config + cumulus_pallet_aura_ext::Config
+	{
 		/// Who can call `setAuthorities` and `setTrustedAuthorities` extrinsics.
 		type AuthoritiesOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
@@ -129,12 +131,18 @@ pub mod pallet {
 			let next = current + BlockNumberFor::<T>::one();
 			let zero = BlockNumberFor::<T>::zero();
 
-			if next % T::TrustedAuthoritiesPeriod::get() == zero {
-				// If TrustedAuthorities is empty, change_authorities does nothing.
-				pallet_aura::Pallet::<T>::change_authorities(<TrustedAuthorities<T>>::get());
+			let authorities = if next % T::TrustedAuthoritiesPeriod::get() == zero {
+				<TrustedAuthorities<T>>::get()
 			} else {
-				pallet_aura::Pallet::<T>::change_authorities(<Authorities<T>>::get());
-			}
+				<Authorities<T>>::get()
+			};
+
+			// If TrustedAuthorities is empty, change_authorities does nothing.
+			pallet_aura::Pallet::<T>::change_authorities(authorities);
+
+			// HACK: Since we update the authorities list in the Aura later than
+			// it's copied to the Cumulus extensions, we need to pull the hook again.
+			cumulus_pallet_aura_ext::Pallet::<T>::on_finalize(current);
 		}
 	}
 }

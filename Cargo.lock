@@ -7161,6 +7161,7 @@ dependencies = [
 name = "pallet-private-balances-aura-ext"
 version = "0.1.0"
 dependencies = [
+ "cumulus-pallet-aura-ext",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
