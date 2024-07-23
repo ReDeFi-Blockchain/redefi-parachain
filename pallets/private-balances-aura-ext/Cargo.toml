@@ -16,7 +16,6 @@ sp-std = { workspace = true }
 sp-weights = { workspace = true }
 
 pallet-aura = { workspace = true }
-cumulus-pallet-aura-ext = { workspace = true }
 
 parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }

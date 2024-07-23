@@ -26,8 +26,14 @@ macro_rules! construct_runtime {
 				ParachainInfo: staging_parachain_info = 21,
 
 				Aura: pallet_aura = 25,
-				AuraExt: cumulus_pallet_aura_ext = 26,
+				// Order in which pallets are declared corresponds to the order
+				// in which hooks are called. PrivateBalancesAuraExt modifies
+				// authorities in Aura and it hooks should be called early than
+				// AuraExt because it depends for authorities too.
+				// Order changes broke authorities consistency and
+				// broke block execution.
 				PrivateBalancesAuraExt: pallet_private_balances_aura_ext = 27,
+				AuraExt: cumulus_pallet_aura_ext = 26,
 
 				Balances: pallet_balances = 30,
 
@@ -38,7 +44,6 @@ macro_rules! construct_runtime {
 				Sudo: pallet_sudo = 35,
 
 				// XCM
-
 				PolkadotXcm: pallet_xcm = 41,
 				CumulusXcm: cumulus_pallet_xcm = 42,
 				MessageQueue: pallet_message_queue = 43,
