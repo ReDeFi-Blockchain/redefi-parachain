@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use default_runtime::RuntimeGenesisConfig;
 #[cfg(feature = "redefi-runtime")]
 pub use redefi_runtime as default_runtime;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
@@ -25,7 +24,7 @@ use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use up_common::types::opaque::*;
 
-pub type ChainSpec = sc_service::GenericChainSpec<RuntimeGenesisConfig, Extensions>;
+pub type ChainSpec = sc_service::GenericChainSpec<Extensions>;
 
 /// PARA_ID for redefi FIXME
 const PARA_ID: u32 = 2222;

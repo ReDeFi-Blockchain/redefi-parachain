@@ -32,7 +32,7 @@ use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImpo
 use cumulus_client_consensus_proposer::Proposer;
 use cumulus_client_parachain_inherent::ParachainInherentData;
 use cumulus_client_service::{
-	build_relay_chain_interface, prepare_node_config, start_relay_chain_tasks, storage_proof_size,
+	build_relay_chain_interface, prepare_node_config, start_relay_chain_tasks,
 	DARecoveryProfile, StartRelayChainTasksParams,
 };
 use cumulus_primitives_core::ParaId;
@@ -45,7 +45,6 @@ use fc_rpc::{
 };
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use fp_rpc::EthereumRuntimeRPCApi;
-use fp_storage::EthereumStorageSchema;
 use futures::{
 	stream::select,
 	task::{Context, Poll},
@@ -56,7 +55,7 @@ use parity_scale_codec::Encode;
 use polkadot_primitives::PersistedValidationData;
 use polkadot_service::CollatorPair;
 use sc_client_api::{
-	backend::StateBackend, AuxStore, Backend, BlockOf, BlockchainEvents, StorageProvider,
+	backend::StateBackend, Backend, BlockOf, BlockchainEvents, StorageProvider,
 };
 use sc_consensus::ImportQueue;
 use sc_executor::{WasmExecutor, HostFunctions};
@@ -889,6 +888,7 @@ where
 
 						let mocked_parachain = cumulus_client_parachain_inherent::MockValidationDataInherentDataProvider {
 							current_para_block,
+							para_id: Default::default(),
 							current_para_block_head,
 							relay_offset: 1000,
 							relay_blocks_per_para_block: 2,
@@ -896,7 +896,6 @@ where
 							xcm_config: cumulus_client_parachain_inherent::MockXcmConfig::new(
 								&*client_for_xcm,
 								block,
-								Default::default(),
 								Default::default(),
 							),
 							relay_randomness_config: (),
