@@ -7158,6 +7158,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-private-balances-aura-ext"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-aura",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-weights",
+]
+
+[[package]]
 name = "pallet-proxy"
 version = "31.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9850,6 +9867,7 @@ dependencies = [
  "pallet-evm-precompile-simple",
  "pallet-message-queue",
  "pallet-preimage",
+ "pallet-private-balances-aura-ext",
  "pallet-session",
  "pallet-sudo",
  "pallet-timestamp",

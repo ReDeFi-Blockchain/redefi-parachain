@@ -32,8 +32,8 @@ use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImpo
 use cumulus_client_consensus_proposer::Proposer;
 use cumulus_client_parachain_inherent::ParachainInherentData;
 use cumulus_client_service::{
-	build_relay_chain_interface, prepare_node_config, start_relay_chain_tasks, storage_proof_size,
-	DARecoveryProfile, StartRelayChainTasksParams,
+	build_relay_chain_interface, prepare_node_config, start_relay_chain_tasks, DARecoveryProfile,
+	StartRelayChainTasksParams,
 };
 use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_interface::{OverseerHandle, RelayChainInterface};
@@ -75,10 +75,16 @@ use substrate_prometheus_endpoint::Registry;
 use tokio::time::Interval;
 use up_common::types::{opaque::*, Nonce};
 
-use crate::{
-	chain_spec::RuntimeIdentification,
-	rpc::{create_eth, create_full, EthDeps, FullDeps},
-};
+use crate::rpc::{create_eth, create_full, EthDeps, FullDeps};
+
+#[cfg(not(feature = "runtime-benchmarks"))]
+pub type ExtendHostFunctions = cumulus_client_service::storage_proof_size::HostFunctions;
+
+#[cfg(feature = "runtime-benchmarks")]
+pub type ExtendHostFunctions = (
+	cumulus_client_service::storage_proof_size::HostFunctions,
+	frame_benchmarking::benchmarking::HostFunctions,
+);
 
 /// Unique native executor instance.
 #[cfg(feature = "redefi-runtime")]
@@ -86,12 +92,7 @@ pub struct RedefiRuntimeExecutor;
 
 #[cfg(feature = "redefi-runtime")]
 impl NativeExecutionDispatch for RedefiRuntimeExecutor {
-	/// Only enable the benchmarking host functions when we actually want to benchmark.
-	#[cfg(feature = "runtime-benchmarks")]
-	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
-	/// Otherwise we only use the default Substrate host functions.
-	#[cfg(not(feature = "runtime-benchmarks"))]
-	type ExtendHostFunctions = storage_proof_size::HostFunctions;
+	type ExtendHostFunctions = ExtendHostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		redefi_runtime::api::dispatch(method, data)

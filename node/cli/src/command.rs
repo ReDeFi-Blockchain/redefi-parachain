@@ -302,14 +302,15 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::Benchmark(cmd)) => {
 			use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 			use polkadot_cli::Block;
-			use sp_io::SubstrateHostFunctions;
+
+			use crate::service::ExtendHostFunctions;
 
 			let runner = cli.create_runner(cmd)?;
 			// Switch on the concrete benchmark sub-command-
 			match cmd {
-				BenchmarkCmd::Pallet(cmd) => {
-					runner.sync_run(|config| cmd.run::<Block, SubstrateHostFunctions>(config))
-				}
+				BenchmarkCmd::Pallet(cmd) => runner.sync_run(|config| {
+					cmd.run::<sp_runtime::traits::HashingFor<Block>, ExtendHostFunctions>(config)
+				}),
 				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
 					let partials = new_partial::<
 						redefi_runtime::Runtime,

@@ -1,0 +1,39 @@
+[package]
+edition = "2021"
+license = "GPLv3"
+name = "pallet-private-balances-aura-ext"
+version = "0.1.0"
+
+[dependencies]
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+frame-benchmarking = { workspace = true, optional = true }
+
+sp-core = { workspace = true }
+sp-io = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
+sp-weights = { workspace = true }
+
+pallet-aura = { workspace = true }
+
+parity-scale-codec = { workspace = true }
+scale-info = { workspace = true }
+
+[features]
+default = ["std"]
+runtime-benchmarks = ["frame-benchmarking"]
+std = [
+	"frame-support/std",
+	"frame-system/std",
+	"frame-benchmarking/std",
+	"sp-core/std",
+	"sp-io/std",
+	"sp-runtime/std",
+	"sp-std/std",
+	"sp-weights/std",
+	"pallet-aura/std",
+	"parity-scale-codec/std",
+	"scale-info/std",
+]
+try-runtime = ["frame-support/try-runtime"]
