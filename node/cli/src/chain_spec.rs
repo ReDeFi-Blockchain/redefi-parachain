@@ -103,6 +103,7 @@ macro_rules! testnet_genesis {
 		$runtime:path,
 		$root_key:expr,
 		$initial_invulnerables:expr,
+		$initial_trusted:expr,
 		$endowed_accounts:expr,
 		$id:expr
 	) => {{
@@ -126,6 +127,12 @@ macro_rules! testnet_genesis {
 			},
 			"aura": {
 				"authorities": $initial_invulnerables
+					.into_iter()
+					.map(|(_, aura)| aura)
+					.collect::<Vec<_>>(),
+			},
+			"privateBalancesAuraExt": {
+				"trustedAuthorities": $initial_trusted
 					.into_iter()
 					.map(|(_, aura)| aura)
 					.collect::<Vec<_>>(),
@@ -180,6 +187,10 @@ pub fn development_config() -> ChainSpec {
 				get_from_seed::<AuraId>("Bob"),
 			),
 		],
+		[(
+			get_account_id_from_seed::<sr25519::Public>("Alice"),
+			get_from_seed::<AuraId>("Alice"),
+		)],
 		// Pre-funded accounts
 		vec![
 			get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -246,6 +257,10 @@ pub fn local_testnet_config() -> ChainSpec {
 				get_from_seed::<AuraId>("Bob"),
 			),
 		],
+		[(
+			get_account_id_from_seed::<sr25519::Public>("Alice"),
+			get_from_seed::<AuraId>("Alice"),
+		)],
 		// Pre-funded accounts
 		vec![
 			get_account_id_from_seed::<sr25519::Public>("Alice"),
