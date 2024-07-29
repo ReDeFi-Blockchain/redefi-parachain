@@ -226,6 +226,7 @@ macro_rules! start_node_using_chain_runtime {
 				redefi_runtime::Runtime,
 				redefi_runtime::RuntimeApi,
 				RedefiRuntimeExecutor,
+				sc_network::NetworkWorker<polkadot_primitives::Block, polkadot_primitives::Hash>,
 			>($config $(, $($args),+)?) $($code)*,
 
 			runtime_id => Err(no_runtime_err!(runtime_id).into()),

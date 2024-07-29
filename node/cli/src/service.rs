@@ -41,8 +41,7 @@ use cumulus_test_relay_sproof_builder::RelayStateSproofBuilder;
 use fc_mapping_sync::{kv::MappingSyncWorker, EthereumBlockNotificationSinks, SyncStrategy};
 use fc_rpc::{
 	frontier_backend_client::SystemAccountId32StorageOverride, EthBlockDataCacheTask, EthConfig,
-	EthTask, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, SchemaV2Override,
-	SchemaV3Override, StorageOverride,
+	EthTask, RuntimeApiStorageOverride, StorageOverride, StorageOverrideHandler,
 };
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use fp_rpc::EthereumRuntimeRPCApi;
@@ -60,7 +59,7 @@ use sc_client_api::{
 };
 use sc_consensus::ImportQueue;
 use sc_executor::{NativeElseWasmExecutor, NativeExecutionDispatch};
-use sc_network::NetworkBlock;
+use sc_network::{NetworkBlock, NetworkBackend};
 use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
 use sc_service::{Configuration, PartialComponents, TaskManager};
@@ -71,6 +70,7 @@ use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraAuthorityPair;
 use sp_keystore::KeystorePtr;
+use sp_runtime::traits::Block as BlockT;
 use substrate_prometheus_endpoint::Registry;
 use tokio::time::Interval;
 use up_common::types::{opaque::*, Nonce};
@@ -126,11 +126,11 @@ impl Stream for AutosealInterval {
 pub fn open_frontier_backend<C: HeaderBackend<Block>>(
 	client: Arc<C>,
 	config: &Configuration,
-) -> Result<Arc<fc_db::kv::Backend<Block>>, String> {
+) -> Result<Arc<fc_db::kv::Backend<Block, C>>, String> {
 	let config_dir = config.base_path.config_dir(config.chain_spec.id());
 	let database_dir = config_dir.join("frontier").join("db");
 
-	Ok(Arc::new(fc_db::kv::Backend::<Block>::new(
+	Ok(Arc::new(fc_db::kv::Backend::<Block, C>::new(
 		client,
 		&fc_db::kv::DatabaseSettings {
 			source: fc_db::DatabaseSource::RocksDb {
@@ -212,7 +212,7 @@ pub fn new_partial<Runtime, RuntimeApi, ExecutorDispatch, BIQ>(
 		FullSelectChain,
 		sc_consensus::DefaultImportQueue<Block>,
 		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
-		OtherPartial,
+		OtherPartial<FullClient<RuntimeApi, ExecutorDispatch>>,
 	>,
 	sc_service::Error,
 >
@@ -315,7 +315,7 @@ macro_rules! clone {
 ///
 /// This is the actual implementation that is abstract over the executor and the runtime api.
 #[sc_tracing::logging::prefix_logs_with("Parachain")]
-pub async fn start_node<Runtime, RuntimeApi, ExecutorDispatch>(
+pub async fn start_node<Runtime, RuntimeApi, ExecutorDispatch, Network>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
 	collator_options: CollatorOptions,
@@ -333,8 +333,13 @@ where
 	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime> + 'static,
 	Runtime: RuntimeInstance,
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
+	Network: NetworkBackend<Block, <Block as BlockT>::Hash>,
 {
 	let parachain_config = prepare_node_config(parachain_config);
+
+	let metrics = Network::register_notification_metrics(
+		parachain_config.prometheus_config.as_ref().map(|cfg| &cfg.registry),
+	);
 
 	let params = new_partial::<Runtime, RuntimeApi, ExecutorDispatch, _>(
 		&parachain_config,
@@ -346,7 +351,7 @@ where
 		eth_filter_pool,
 		eth_backend,
 	} = params.other;
-	let net_config = sc_network::config::FullNetworkConfiguration::new(&parachain_config.network);
+	let net_config = sc_network::config::FullNetworkConfiguration::<Block, <Block as BlockT>::Hash, Network>::new(&parachain_config.network);
 
 	let client = params.client.clone();
 	let backend = params.backend.clone();
@@ -385,6 +390,7 @@ where
 			})),
 			warp_sync_params: None,
 			block_relay: None,
+			metrics
 		})?;
 
 	// Frontier
@@ -395,7 +401,7 @@ where
 		EthereumBlockNotificationSinks<fc_mapping_sync::EthereumBlockNotification<Block>>,
 	> = Default::default();
 
-	let overrides = overrides_handle(client.clone());
+	let overrides = Arc::new(StorageOverrideHandler::new(client.clone()));
 	let eth_block_data_cache = spawn_frontier_tasks(
 		FrontierTaskParams {
 			client: client.clone(),
@@ -669,7 +675,6 @@ where
 		collator_key,
 		announce_block,
 	} = parameters;
-	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
 	let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
 		task_manager.spawn_handle(),
@@ -697,7 +702,6 @@ where
 		relay_client: relay_chain_interface,
 		sync_oracle,
 		keystore,
-		slot_duration,
 		proposer,
 		collator_service,
 		// With async-baking, we allowed to be both slower (longer authoring) and faster (multiple para blocks per relay block)
@@ -739,11 +743,11 @@ where
 	))
 }
 
-pub struct OtherPartial {
+pub struct OtherPartial<C: HeaderBackend<Block>> {
 	pub telemetry: Option<Telemetry>,
 	pub telemetry_worker_handle: Option<TelemetryWorkerHandle>,
 	pub eth_filter_pool: Option<FilterPool>,
-	pub eth_backend: Arc<fc_db::kv::Backend<Block>>,
+	pub eth_backend: Arc<fc_db::kv::Backend<Block, C>>,
 }
 
 struct DefaultEthConfig<C>(PhantomData<C>);
@@ -757,7 +761,7 @@ where
 
 /// Builds a new development service. This service uses instant seal, and mocks
 /// the parachain inherent
-pub fn start_dev_node<Runtime, RuntimeApi, ExecutorDispatch>(
+pub fn start_dev_node<Runtime, RuntimeApi, ExecutorDispatch, Network>(
 	config: Configuration,
 	autoseal_interval: u64,
 	autoseal_finalize_delay: Option<u64>,
@@ -773,12 +777,17 @@ where
 		+ 'static,
 	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime> + 'static,
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
+	Network: NetworkBackend<Block, <Block as BlockT>::Hash>,
 {
 	use fc_consensus::FrontierBlockImport;
 	use sc_consensus_manual_seal::{
 		run_delayed_finalize, run_manual_seal, DelayedFinalizeParams, EngineCommand,
 		ManualSealParams,
 	};
+	
+	let metrics = Network::register_notification_metrics(
+		config.prometheus_config.as_ref().map(|cfg| &cfg.registry),
+	);
 
 	let sc_service::PartialComponents {
 		client,
@@ -799,7 +808,7 @@ where
 		&config,
 		dev_build_import_queue::<RuntimeApi, ExecutorDispatch>,
 	)?;
-	let net_config = sc_network::config::FullNetworkConfiguration::new(&config.network);
+	let net_config = sc_network::config::FullNetworkConfiguration::<Block, <Block as BlockT>::Hash, Network>::new(&config.network);
 	let prometheus_registry = config.prometheus_registry().cloned();
 
 	let (network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
@@ -813,6 +822,7 @@ where
 			block_announce_validator_builder: None,
 			warp_sync_params: None,
 			block_relay: None,
+			metrics,
 		})?;
 
 	let collator = config.role.is_authority();
@@ -935,7 +945,7 @@ where
 		EthereumBlockNotificationSinks<fc_mapping_sync::EthereumBlockNotification<Block>>,
 	> = Default::default();
 
-	let overrides = overrides_handle(client.clone());
+	let overrides = Arc::new(StorageOverrideHandler::new(client.clone()));
 	let eth_block_data_cache = spawn_frontier_tasks(
 		FrontierTaskParams {
 			client: client.clone(),
@@ -1052,42 +1062,13 @@ where
 	Ok(task_manager)
 }
 
-fn overrides_handle<C, BE>(client: Arc<C>) -> Arc<OverrideHandle<Block>>
-where
-	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
-	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
-	C: Send + Sync + 'static,
-	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
-	BE: Backend<Block> + 'static,
-	BE::State: StateBackend<BlakeTwo256>,
-{
-	let mut overrides_map = BTreeMap::new();
-	overrides_map.insert(
-		EthereumStorageSchema::V1,
-		Box::new(SchemaV1Override::new(client.clone())) as Box<dyn StorageOverride<_> + 'static>,
-	);
-	overrides_map.insert(
-		EthereumStorageSchema::V2,
-		Box::new(SchemaV2Override::new(client.clone())) as Box<dyn StorageOverride<_> + 'static>,
-	);
-	overrides_map.insert(
-		EthereumStorageSchema::V3,
-		Box::new(SchemaV3Override::new(client.clone())) as Box<dyn StorageOverride<_> + 'static>,
-	);
-
-	Arc::new(OverrideHandle {
-		schemas: overrides_map,
-		fallback: Box::new(RuntimeApiStorageOverride::new(client)),
-	})
-}
-
-pub struct FrontierTaskParams<'a, C, B> {
+pub struct FrontierTaskParams<'a, C: HeaderBackend<Block>, B> {
 	pub task_manager: &'a TaskManager,
 	pub client: Arc<C>,
 	pub substrate_backend: Arc<B>,
-	pub eth_backend: Arc<fc_db::kv::Backend<Block>>,
+	pub eth_backend: Arc<fc_db::kv::Backend<Block, C>>,
 	pub eth_filter_pool: Option<FilterPool>,
-	pub overrides: Arc<OverrideHandle<Block>>,
+	pub overrides: Arc<dyn StorageOverride<Block>>,
 	pub fee_history_limit: u64,
 	pub fee_history_cache: FeeHistoryCache,
 	pub sync_strategy: SyncStrategy,
