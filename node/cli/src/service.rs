@@ -52,6 +52,7 @@ use futures::{
 	Stream, StreamExt,
 };
 use jsonrpsee::RpcModule;
+use parity_scale_codec::Encode;
 use polkadot_primitives::PersistedValidationData;
 use polkadot_service::CollatorPair;
 use sc_client_api::{
@@ -898,17 +899,20 @@ where
 				select_chain: select_chain.clone(),
 				consensus_data_provider: None,
 				create_inherent_data_providers: move |block: Hash, ()| {
-					let current_para_block = client_set_aside_for_cidp
-						.number(block)
+					let header = client_set_aside_for_cidp.header(block)
 						.expect("Header lookup should succeed")
 						.expect("Header passed in as parent should be present in backend.");
 
+					let current_para_block = header.number;
+					let current_para_block_head = Some(cumulus_primitives_core::relay_chain::HeadData(header.encode()));
+	
 					let client_for_xcm = client_set_aside_for_cidp.clone();
 					async move {
 						let time = sp_timestamp::InherentDataProvider::from_system_time();
 
 						let mocked_parachain = cumulus_client_parachain_inherent::MockValidationDataInherentDataProvider {
 							current_para_block,
+							current_para_block_head,
 							relay_offset: 1000,
 							relay_blocks_per_para_block: 2,
 							para_blocks_per_relay_epoch: 0,
