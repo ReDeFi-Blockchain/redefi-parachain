@@ -32,6 +32,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use cumulus_client_service::storage_proof_size;
 use cumulus_primitives_core::ParaId;
 use log::info;
 use sc_cli::{
@@ -43,7 +44,26 @@ use sp_runtime::traits::AccountIdConversion;
 use up_common::types::opaque::RuntimeId;
 
 #[cfg(feature = "redefi-runtime")]
-use crate::service::RedefiRuntimeExecutor;
+type RedefiHostFunctions = (
+	cumulus_client_service::ParachainHostFunctions,
+	storage_proof_size::HostFunctions,
+);
+
+#[cfg(not(feature = "redefi-runtime"))]
+type RedefiHostFunctions = (
+	cumulus_client_service::ParachainHostFunctions,
+);
+
+/// Only enable the benchmarking host functions when we actually want to benchmark.
+#[cfg(feature = "runtime-benchmarks")]
+pub type HostFunctions = (
+	RedefiHostFunctions,
+	frame_benchmarking::benchmarking::HostFunctions,
+);
+/// Otherwise we use empty host functions for ext host functions.
+#[cfg(not(feature = "runtime-benchmarks"))]
+pub type HostFunctions = RedefiHostFunctions;
+
 use crate::{
 	chain_spec::{self, RuntimeIdentification, ServiceId, ServiceIdentification},
 	cli::{Cli, RelayChainCli, Subcommand},
@@ -174,7 +194,7 @@ macro_rules! construct_async_run {
 		match runner.config().chain_spec.runtime_id() {
 			#[cfg(feature = "redefi-runtime")]
 			RuntimeId::Redefi => async_run_with_runtime!(
-				redefi_runtime::Runtime, redefi_runtime::RuntimeApi, RedefiRuntimeExecutor,
+				redefi_runtime::Runtime, redefi_runtime::RuntimeApi, HostFunctions,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
@@ -209,7 +229,7 @@ macro_rules! construct_sync_run {
 		match runner.config().chain_spec.runtime_id() {
 			#[cfg(feature = "redefi-runtime")]
 			RuntimeId::Redefi => sync_run_with_runtime!(
-				redefi_runtime::Runtime, redefi_runtime::RuntimeApi, RedefiRuntimeExecutor,
+				redefi_runtime::Runtime, redefi_runtime::RuntimeApi, HostFunctions,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
@@ -225,7 +245,7 @@ macro_rules! start_node_using_chain_runtime {
 			RuntimeId::Redefi => $start_node_fn::<
 				redefi_runtime::Runtime,
 				redefi_runtime::RuntimeApi,
-				RedefiRuntimeExecutor,
+				HostFunctions,
 				sc_network::NetworkWorker<polkadot_primitives::Block, polkadot_primitives::Hash>,
 			>($config $(, $($args),+)?) $($code)*,
 
@@ -315,7 +335,7 @@ pub fn run() -> Result<()> {
 					let partials = new_partial::<
 						redefi_runtime::Runtime,
 						redefi_runtime::RuntimeApi,
-						RedefiRuntimeExecutor,
+						HostFunctions,
 						_,
 					>(
 						&config,
@@ -327,7 +347,7 @@ pub fn run() -> Result<()> {
 					let partials = new_partial::<
 						redefi_runtime::Runtime,
 						redefi_runtime::RuntimeApi,
-						RedefiRuntimeExecutor,
+						HostFunctions,
 						_,
 					>(
 						&config,
@@ -375,7 +395,7 @@ pub fn run() -> Result<()> {
 						#[cfg(feature = "redefi-runtime")]
 						RuntimeId::Redefi => Box::pin(cmd.run::<Block, ExtendedHostFunctions<
 							sp_io::SubstrateHostFunctions,
-							<RedefiRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions,
+							HostFunctions,
 						>, _>(info_provider)),
 						runtime_id => return Err(no_runtime_err!(runtime_id).into()),
 					},

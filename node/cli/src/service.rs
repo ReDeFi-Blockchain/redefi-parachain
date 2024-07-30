@@ -59,7 +59,7 @@ use sc_client_api::{
 	backend::StateBackend, AuxStore, Backend, BlockOf, BlockchainEvents, StorageProvider,
 };
 use sc_consensus::ImportQueue;
-use sc_executor::{NativeElseWasmExecutor, NativeExecutionDispatch};
+use sc_executor::{WasmExecutor, HostFunctions};
 use sc_network::{NetworkBlock, NetworkBackend};
 use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
@@ -77,31 +77,8 @@ use tokio::time::Interval;
 use up_common::types::{opaque::*, Nonce};
 
 use crate::{
-	chain_spec::RuntimeIdentification,
 	rpc::{create_eth, create_full, EthDeps, FullDeps},
 };
-
-/// Unique native executor instance.
-#[cfg(feature = "redefi-runtime")]
-pub struct RedefiRuntimeExecutor;
-
-#[cfg(feature = "redefi-runtime")]
-impl NativeExecutionDispatch for RedefiRuntimeExecutor {
-	/// Only enable the benchmarking host functions when we actually want to benchmark.
-	#[cfg(feature = "runtime-benchmarks")]
-	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
-	/// Otherwise we only use the default Substrate host functions.
-	#[cfg(not(feature = "runtime-benchmarks"))]
-	type ExtendHostFunctions = storage_proof_size::HostFunctions;
-
-	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		redefi_runtime::api::dispatch(method, data)
-	}
-
-	fn native_version() -> sc_executor::NativeVersion {
-		redefi_runtime::native_version()
-	}
-}
 
 pub struct AutosealInterval {
 	interval: Interval,
@@ -142,12 +119,12 @@ pub fn open_frontier_backend<C: HeaderBackend<Block>>(
 	)?))
 }
 
-type FullClient<RuntimeApi, ExecutorDispatch> =
-	sc_service::TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<ExecutorDispatch>>;
+type FullClient<RuntimeApi, HF> =
+	sc_service::TFullClient<Block, RuntimeApi, WasmExecutor<HF>>;
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
-type ParachainBlockImport<RuntimeApi, ExecutorDispatch> =
-	TParachainBlockImport<Block, Arc<FullClient<RuntimeApi, ExecutorDispatch>>, FullBackend>;
+type ParachainBlockImport<RuntimeApi, HF> =
+	TParachainBlockImport<Block, Arc<FullClient<RuntimeApi, HF>>, FullBackend>;
 
 /// Generate a supertrait based on bounds, and blanket impl for it.
 macro_rules! ez_bounds {
@@ -203,30 +180,30 @@ fn ethereum_parachain_inherent() -> (sp_timestamp::InherentDataProvider, Paracha
 /// Use this macro if you don't actually need the full service, but just the builder in order to
 /// be able to perform chain operations.
 #[allow(clippy::type_complexity)]
-pub fn new_partial<Runtime, RuntimeApi, ExecutorDispatch, BIQ>(
+pub fn new_partial<Runtime, RuntimeApi, HF, BIQ>(
 	config: &Configuration,
 	build_import_queue: BIQ,
 ) -> Result<
 	PartialComponents<
-		FullClient<RuntimeApi, ExecutorDispatch>,
+		FullClient<RuntimeApi, HF>,
 		FullBackend,
 		FullSelectChain,
 		sc_consensus::DefaultImportQueue<Block>,
-		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
-		OtherPartial<FullClient<RuntimeApi, ExecutorDispatch>>,
+		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, HF>>,
+		OtherPartial<FullClient<RuntimeApi, HF>>,
 	>,
 	sc_service::Error,
 >
 where
-	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
+	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, HF>>
 		+ Send
 		+ Sync
 		+ 'static,
 	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime> + 'static,
 	Runtime: RuntimeInstance,
-	ExecutorDispatch: NativeExecutionDispatch + 'static,
+	HF: HostFunctions + 'static,
 	BIQ: FnOnce(
-		Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
+		Arc<FullClient<RuntimeApi, HF>>,
 		Arc<FullBackend>,
 		&Configuration,
 		Option<TelemetryHandle>,
@@ -244,7 +221,7 @@ where
 		})
 		.transpose()?;
 
-	let executor = sc_service::new_native_or_wasm_executor(config);
+	let executor = sc_service::new_wasm_executor(config);
 
 	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, _>(
@@ -316,24 +293,24 @@ macro_rules! clone {
 ///
 /// This is the actual implementation that is abstract over the executor and the runtime api.
 #[sc_tracing::logging::prefix_logs_with("Parachain")]
-pub async fn start_node<Runtime, RuntimeApi, ExecutorDispatch, Network>(
+pub async fn start_node<Runtime, RuntimeApi, HF, Network>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
 	collator_options: CollatorOptions,
 	para_id: ParaId,
 	hwbench: Option<sc_sysinfo::HwBench>,
-) -> sc_service::error::Result<(TaskManager, Arc<FullClient<RuntimeApi, ExecutorDispatch>>)>
+) -> sc_service::error::Result<(TaskManager, Arc<FullClient<RuntimeApi, HF>>)>
 where
 	Runtime: RuntimeInstance + Send + Sync + 'static,
 	<Runtime as RuntimeInstance>::CrossAccountId: Serialize,
 	for<'de> <Runtime as RuntimeInstance>::CrossAccountId: Deserialize<'de>,
-	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
+	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, HF>>
 		+ Send
 		+ Sync
 		+ 'static,
 	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime> + 'static,
 	Runtime: RuntimeInstance,
-	ExecutorDispatch: NativeExecutionDispatch + 'static,
+	HF: HostFunctions + 'static,
 	Network: NetworkBackend<Block, <Block as BlockT>::Hash>,
 {
 	let parachain_config = prepare_node_config(parachain_config);
@@ -342,7 +319,7 @@ where
 		parachain_config.prometheus_config.as_ref().map(|cfg| &cfg.registry),
 	);
 
-	let params = new_partial::<Runtime, RuntimeApi, ExecutorDispatch, _>(
+	let params = new_partial::<Runtime, RuntimeApi, HF, _>(
 		&parachain_config,
 		parachain_build_import_queue,
 	)?;
@@ -487,7 +464,7 @@ where
 				_,
 				_,
 				_,
-				DefaultEthConfig<FullClient<RuntimeApi, ExecutorDispatch>>,
+				DefaultEthConfig<FullClient<RuntimeApi, HF>>,
 			>(
 				&mut rpc_handle,
 				eth_deps,
@@ -583,21 +560,21 @@ where
 }
 
 /// Build the import queue for the the parachain runtime.
-pub fn parachain_build_import_queue<Runtime, RuntimeApi, ExecutorDispatch>(
-	client: Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
+pub fn parachain_build_import_queue<Runtime, RuntimeApi, HF>(
+	client: Arc<FullClient<RuntimeApi, HF>>,
 	backend: Arc<FullBackend>,
 	config: &Configuration,
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
 ) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>
 where
-	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
+	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, HF>>
 		+ Send
 		+ Sync
 		+ 'static,
 	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime> + 'static,
 	Runtime: RuntimeInstance,
-	ExecutorDispatch: NativeExecutionDispatch + 'static,
+	HF: HostFunctions + 'static,
 {
 	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
@@ -646,16 +623,16 @@ pub struct StartConsensusParameters<'a> {
 	announce_block: Arc<dyn Fn(Hash, Option<Vec<u8>>) + Send + Sync>,
 }
 
-pub fn start_consensus<ExecutorDispatch, RuntimeApi, Runtime>(
-	client: Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
+pub fn start_consensus<HF, RuntimeApi, Runtime>(
+	client: Arc<FullClient<RuntimeApi, HF>>,
 	transaction_pool: Arc<
-		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
+		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, HF>>,
 	>,
 	parameters: StartConsensusParameters<'_>,
 ) -> Result<(), sc_service::Error>
 where
-	ExecutorDispatch: NativeExecutionDispatch + 'static,
-	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
+	HF: HostFunctions + 'static,
+	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, HF>>
 		+ Send
 		+ Sync
 		+ 'static,
@@ -721,21 +698,21 @@ where
 	Ok(())
 }
 
-fn dev_build_import_queue<RuntimeApi, ExecutorDispatch>(
-	client: Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
+fn dev_build_import_queue<RuntimeApi, HF>(
+	client: Arc<FullClient<RuntimeApi, HF>>,
 	_: Arc<FullBackend>,
 	config: &Configuration,
 	_: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
 ) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>
 where
-	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
+	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, HF>>
 		+ Send
 		+ Sync
 		+ 'static,
 	RuntimeApi::RuntimeApi:
 		sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block> + sp_api::ApiExt<Block>,
-	ExecutorDispatch: NativeExecutionDispatch + 'static,
+		HF: HostFunctions + 'static,
 {
 	Ok(sc_consensus_manual_seal::import_queue(
 		Box::new(client),
@@ -762,7 +739,7 @@ where
 
 /// Builds a new development service. This service uses instant seal, and mocks
 /// the parachain inherent
-pub fn start_dev_node<Runtime, RuntimeApi, ExecutorDispatch, Network>(
+pub fn start_dev_node<Runtime, RuntimeApi, HF, Network>(
 	config: Configuration,
 	autoseal_interval: u64,
 	autoseal_finalize_delay: Option<u64>,
@@ -772,12 +749,12 @@ where
 	Runtime: RuntimeInstance + Send + Sync + 'static,
 	<Runtime as RuntimeInstance>::CrossAccountId: Serialize,
 	for<'de> <Runtime as RuntimeInstance>::CrossAccountId: Deserialize<'de>,
-	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
+	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, HF>>
 		+ Send
 		+ Sync
 		+ 'static,
 	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime> + 'static,
-	ExecutorDispatch: NativeExecutionDispatch + 'static,
+	HF: HostFunctions + 'static,
 	Network: NetworkBackend<Block, <Block as BlockT>::Hash>,
 {
 	use fc_consensus::FrontierBlockImport;
@@ -805,9 +782,9 @@ where
 				eth_backend,
 				telemetry_worker_handle: _,
 			},
-	} = new_partial::<Runtime, RuntimeApi, ExecutorDispatch, _>(
+	} = new_partial::<Runtime, RuntimeApi, HF, _>(
 		&config,
-		dev_build_import_queue::<RuntimeApi, ExecutorDispatch>,
+		dev_build_import_queue::<RuntimeApi, HF>,
 	)?;
 	let net_config = sc_network::config::FullNetworkConfiguration::<Block, <Block as BlockT>::Hash, Network>::new(&config.network);
 	let prometheus_registry = config.prometheus_registry().cloned();
@@ -1036,7 +1013,7 @@ where
 				_,
 				_,
 				_,
-				DefaultEthConfig<FullClient<RuntimeApi, ExecutorDispatch>>,
+				DefaultEthConfig<FullClient<RuntimeApi, HF>>,
 			>(
 				&mut rpc_module,
 				eth_deps,
