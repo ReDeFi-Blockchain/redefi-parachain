@@ -7158,6 +7158,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-private-balances"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "redefi-private-balances-runtime-ext",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-weights",
+]
+
+[[package]]
 name = "pallet-private-balances-aura-ext"
 version = "0.1.0"
 dependencies = [
@@ -9784,6 +9801,7 @@ dependencies = [
  "polkadot-cli",
  "polkadot-primitives",
  "polkadot-service",
+ "redefi-private-balances-runtime-ext",
  "redefi-runtime",
  "sc-basic-authorship",
  "sc-chain-spec",
@@ -9814,6 +9832,7 @@ dependencies = [
  "sp-offchain",
  "sp-runtime",
  "sp-session",
+ "sp-std",
  "sp-timestamp",
  "sp-transaction-pool",
  "substrate-build-script-utils",
@@ -9823,6 +9842,17 @@ dependencies = [
  "try-runtime-cli",
  "up-common",
  "up-data-structs",
+]
+
+[[package]]
+name = "redefi-private-balances-runtime-ext"
+version = "1.9.0"
+dependencies = [
+ "sp-core",
+ "sp-externalities",
+ "sp-io",
+ "sp-runtime-interface",
+ "sp-std",
 ]
 
 [[package]]
@@ -9867,6 +9897,7 @@ dependencies = [
  "pallet-evm-precompile-simple",
  "pallet-message-queue",
  "pallet-preimage",
+ "pallet-private-balances",
  "pallet-private-balances-aura-ext",
  "pallet-session",
  "pallet-sudo",

@@ -1,0 +1,23 @@
+[package]
+authors = ['ReDeFi Network <support@redefi.world>']
+name = 'redefi-private-balances-runtime-ext'
+version.workspace = true
+homepage = 'https://redefi.world'
+edition.workspace = true
+
+[dependencies]
+sp-core = { workspace = true }
+sp-externalities = { workspace = true }
+sp-io = { workspace = true }
+sp-std = { workspace = true }
+sp-runtime-interface = { workspace = true }
+
+[features]
+default = ["std"]
+std = [
+    "sp-core/std",
+    "sp-externalities/std",
+    "sp-io/std",
+    "sp-std/std",
+    "sp-runtime-interface/std"
+]

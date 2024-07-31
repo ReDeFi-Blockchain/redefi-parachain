@@ -55,6 +55,7 @@ use futures::{
 use jsonrpsee::RpcModule;
 use polkadot_primitives::PersistedValidationData;
 use polkadot_service::CollatorPair;
+use redefi_private_balances_runtime_ext::PrivateBalancesExt;
 use sc_client_api::{
 	backend::StateBackend, AuxStore, Backend, BlockOf, BlockchainEvents, StorageProvider,
 };
@@ -66,7 +67,7 @@ use sc_rpc::SubscriptionTaskExecutor;
 use sc_service::{Configuration, PartialComponents, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use serde::{Deserialize, Serialize};
-use sp_api::ProvideRuntimeApi;
+use sp_api::{ApiExt, ProvideRuntimeApi};
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraAuthorityPair;
@@ -78,11 +79,15 @@ use up_common::types::{opaque::*, Nonce};
 use crate::rpc::{create_eth, create_full, EthDeps, FullDeps};
 
 #[cfg(not(feature = "runtime-benchmarks"))]
-pub type ExtendHostFunctions = cumulus_client_service::storage_proof_size::HostFunctions;
+pub type ExtendHostFunctions = (
+	cumulus_client_service::storage_proof_size::HostFunctions,
+	redefi_private_balances_runtime_ext::HostFunctions,
+);
 
 #[cfg(feature = "runtime-benchmarks")]
 pub type ExtendHostFunctions = (
 	cumulus_client_service::storage_proof_size::HostFunctions,
+	redefi_private_balances_runtime_ext::HostFunctions,
 	frame_benchmarking::benchmarking::HostFunctions,
 );
 
@@ -815,6 +820,8 @@ where
 			warp_sync_params: None,
 			block_relay: None,
 		})?;
+
+	client.register_runtime_extension(move || RedefiPrivateBalances::new());
 
 	let collator = config.role.is_authority();
 
