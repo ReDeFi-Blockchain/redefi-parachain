@@ -42,7 +42,7 @@ use sp_runtime::{
 use up_common::{constants::*, types::*};
 
 use crate::{
-	runtime_common::DealWithFees, Balances, Block, OriginCaller, PalletInfo, Runtime, RuntimeCall,
+	runtime_common::DealWithFees, Aura, Balances, Block, OriginCaller, PalletInfo, Runtime, RuntimeCall,
 	RuntimeEvent, RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin, RuntimeTask, SS58Prefix,
 	System, Treasury, Version,
 };
@@ -124,8 +124,11 @@ impl frame_system::Config for Runtime {
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = u64;
-	type OnTimestampSet = ();
-	type MinimumPeriod = ConstU64<{ SLOT_DURATION / 2 }>;
+	type OnTimestampSet = Aura;
+	#[cfg(feature = "experimental")]
+    type MinimumPeriod = ConstU64<0>;
+    #[cfg(not(feature = "experimental"))]
+    type MinimumPeriod = ConstU64<{ SLOT_DURATION / 2 }>;
 	type WeightInfo = ();
 }
 

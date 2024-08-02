@@ -327,11 +327,20 @@ macro_rules! impl_common_runtime_apis {
 
 			impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
 				fn slot_duration() -> sp_consensus_aura::SlotDuration {
-					sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
+					sp_consensus_aura::SlotDuration::from_millis(up_common::constants::SLOT_DURATION)
 				}
 
 				fn authorities() -> Vec<AuraId> {
 					Authorities::<Self>::get().to_vec()
+				}
+			}
+
+			impl cumulus_primitives_aura::AuraUnincludedSegmentApi<Block> for Runtime {
+				fn can_build_upon(
+					included_hash: <Block as BlockT>::Hash,
+					slot: cumulus_primitives_aura::Slot,
+				) -> bool {
+					$crate::config::parachain::ConsensusHook::can_build_upon(included_hash, slot)
 				}
 			}
 

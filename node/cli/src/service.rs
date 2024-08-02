@@ -25,9 +25,7 @@ use std::{
 
 use cumulus_client_cli::CollatorOptions;
 use cumulus_client_collator::service::CollatorService;
-use cumulus_client_consensus_aura::collators::basic::{
-	run as run_aura, Params as BuildAuraConsensusParams,
-};
+use cumulus_client_consensus_aura::collators::lookahead::{self as aura, Params as AuraParams};
 use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImport;
 use cumulus_client_consensus_proposer::Proposer;
 use cumulus_client_parachain_inherent::ParachainInherentData;
@@ -35,13 +33,16 @@ use cumulus_client_service::{
 	build_relay_chain_interface, prepare_node_config, start_relay_chain_tasks,
 	DARecoveryProfile, StartRelayChainTasksParams,
 };
-use cumulus_primitives_core::ParaId;
+use cumulus_primitives_core::{
+	relay_chain::ValidationCode,
+	ParaId,
+};
 use cumulus_relay_chain_interface::{OverseerHandle, RelayChainInterface};
 use cumulus_test_relay_sproof_builder::RelayStateSproofBuilder;
 use fc_mapping_sync::{kv::MappingSyncWorker, EthereumBlockNotificationSinks, SyncStrategy};
 use fc_rpc::{
 	frontier_backend_client::SystemAccountId32StorageOverride, EthBlockDataCacheTask, EthConfig,
-	EthTask, RuntimeApiStorageOverride, StorageOverride, StorageOverrideHandler,
+	EthTask, StorageOverride, StorageOverrideHandler,
 };
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use fp_rpc::EthereumRuntimeRPCApi;
@@ -68,16 +69,13 @@ use serde::{Deserialize, Serialize};
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
-use sp_consensus_aura::sr25519::AuthorityPair as AuraAuthorityPair;
 use sp_keystore::KeystorePtr;
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::{app_crypto::AppCrypto, traits::Block as BlockT};
 use substrate_prometheus_endpoint::Registry;
 use tokio::time::Interval;
 use up_common::types::{opaque::*, Nonce};
 
-use crate::{
-	rpc::{create_eth, create_full, EthDeps, FullDeps},
-};
+use crate::rpc::{create_eth, create_full, EthDeps, FullDeps};
 
 pub struct AutosealInterval {
 	interval: Interval,
@@ -150,6 +148,10 @@ ez_bounds!(
 		+ fp_rpc::ConvertTransactionRuntimeApi<Block>
 	{
 	}
+);
+
+ez_bounds!(
+	pub trait LookaheadApiDep: cumulus_primitives_aura::AuraUnincludedSegmentApi<Block> {}
 );
 
 fn ethereum_parachain_inherent() -> (sp_timestamp::InherentDataProvider, ParachainInherentData) {
@@ -308,6 +310,7 @@ where
 		+ Sync
 		+ 'static,
 	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime> + 'static,
+	RuntimeApi::RuntimeApi: LookaheadApiDep,
 	Runtime: RuntimeInstance,
 	HF: HostFunctions + 'static,
 	Network: NetworkBackend<Block, <Block as BlockT>::Hash>,
@@ -636,6 +639,7 @@ where
 		+ Sync
 		+ 'static,
 	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime> + 'static,
+	RuntimeApi::RuntimeApi: LookaheadApiDep,
 	Runtime: RuntimeInstance,
 {
 	let StartConsensusParameters {
@@ -671,29 +675,30 @@ where
 
 	let block_import = ParachainBlockImport::new(client.clone(), backend.clone());
 
-	let params = BuildAuraConsensusParams {
+	let params = AuraParams {
 		create_inherent_data_providers: move |_, ()| async move { Ok(()) },
 		block_import,
 		para_client: client.clone(),
-		para_id,
+		para_backend: backend.clone(),
 		relay_client: relay_chain_interface,
+		code_hash_provider: move |block_hash| {
+			client.code_at(block_hash).ok().map(|c| ValidationCode::from(c).hash())
+		},
 		sync_oracle,
 		keystore,
 		proposer,
 		collator_service,
 		// With async-baking, we allowed to be both slower (longer authoring) and faster (multiple para blocks per relay block)
-		authoring_duration: Duration::from_millis(500),
+		authoring_duration: Duration::from_millis(1500),
 		overseer_handle,
 		collator_key,
+		para_id,
 		relay_chain_slot_duration,
-		collation_request_receiver: None,
+		reinitialize: true,
 	};
 
-	task_manager.spawn_essential_handle().spawn(
-		"aura",
-		None,
-		run_aura::<_, AuraAuthorityPair, _, _, _, _, _, _, _>(params),
-	);
+	let fut = aura::run::<Block, <AuraId as AppCrypto>::Pair, _, _, _, _, _, _, _, _, _>(params);
+	task_manager.spawn_essential_handle().spawn("aura", None, fut);
 	Ok(())
 }
 
@@ -740,6 +745,7 @@ where
 /// the parachain inherent
 pub fn start_dev_node<Runtime, RuntimeApi, HF, Network>(
 	config: Configuration,
+	para_id: ParaId,
 	autoseal_interval: u64,
 	autoseal_finalize_delay: Option<u64>,
 	disable_autoseal_on_tx: bool,
@@ -888,7 +894,7 @@ where
 
 						let mocked_parachain = cumulus_client_parachain_inherent::MockValidationDataInherentDataProvider {
 							current_para_block,
-							para_id: Default::default(),
+							para_id,
 							current_para_block_head,
 							relay_offset: 1000,
 							relay_blocks_per_para_block: 2,
@@ -1031,7 +1037,7 @@ where
 		task_manager: &mut task_manager,
 		transaction_pool,
 		rpc_builder,
-		backend,
+		backend: backend.clone(),
 		system_rpc_tx,
 		config,
 		telemetry: None,
