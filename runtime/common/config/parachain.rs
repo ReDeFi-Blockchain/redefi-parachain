@@ -20,6 +20,10 @@ use sp_runtime::Perbill;
 use staging_xcm_builder::ProcessXcmMessage;
 use staging_xcm_executor::XcmExecutor;
 use up_common::constants::*;
+use cumulus_pallet_parachain_system::{
+	consensus_hook::{UnincludedSegmentCapacity},
+	relay_state_snapshot::RelayChainStateProof,
+};
 
 
 use super::{substrate::RuntimeBlockWeights, xcm::XcmConfig};
@@ -59,7 +63,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type CheckAssociatedRelayNumber = cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases;
 	type DmpQueue = frame_support::traits::EnqueueWithOrigin<MessageQueue, RelayOrigin>;
 	type WeightInfo = ();
-	type ConsensusHook = ConsensusHook;
+	type ConsensusHook = ConsensusHookWrapper;
 }
 
 impl staging_parachain_info::Config for Runtime {}
@@ -89,4 +93,17 @@ impl pallet_message_queue::Config for Runtime {
 	type MaxStale = sp_core::ConstU32<8>;
 	type ServiceWeight = MessageQueueServiceWeight;
 	type IdleMaxServiceWeight = ();
+}
+
+pub struct ConsensusHookWrapper;
+
+impl cumulus_pallet_parachain_system::ConsensusHook for ConsensusHookWrapper {
+	fn on_state_proof(state_proof: &RelayChainStateProof) -> (Weight, UnincludedSegmentCapacity) {
+		let slot = pallet_aura::CurrentSlot::<Runtime>::get();
+		if *slot == 0 {
+			cumulus_pallet_parachain_system::ExpectParentIncluded::on_state_proof(state_proof)
+		} else {
+			ConsensusHook::on_state_proof(state_proof)
+		}
+	}
 }
