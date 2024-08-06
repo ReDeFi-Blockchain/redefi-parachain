@@ -42,8 +42,16 @@ use sc_service::config::{BasePath, PrometheusConfig};
 use sp_runtime::traits::AccountIdConversion;
 use up_common::types::opaque::RuntimeId;
 
-#[cfg(feature = "redefi-runtime")]
-use crate::service::RedefiRuntimeExecutor;
+/// Only enable the benchmarking host functions when we actually want to benchmark.
+#[cfg(feature = "runtime-benchmarks")]
+pub type HostFunctions = (
+	cumulus_client_service::ParachainHostFunctions,
+	frame_benchmarking::benchmarking::HostFunctions,
+);
+/// Otherwise we use empty host functions for ext host functions.
+#[cfg(not(feature = "runtime-benchmarks"))]
+pub type HostFunctions = cumulus_client_service::ParachainHostFunctions;
+
 use crate::{
 	chain_spec::{self, RuntimeIdentification, ServiceId, ServiceIdentification},
 	cli::{Cli, RelayChainCli, Subcommand},
@@ -174,7 +182,7 @@ macro_rules! construct_async_run {
 		match runner.config().chain_spec.runtime_id() {
 			#[cfg(feature = "redefi-runtime")]
 			RuntimeId::Redefi => async_run_with_runtime!(
-				redefi_runtime::Runtime, redefi_runtime::RuntimeApi, RedefiRuntimeExecutor,
+				redefi_runtime::Runtime, redefi_runtime::RuntimeApi, HostFunctions,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
@@ -209,7 +217,7 @@ macro_rules! construct_sync_run {
 		match runner.config().chain_spec.runtime_id() {
 			#[cfg(feature = "redefi-runtime")]
 			RuntimeId::Redefi => sync_run_with_runtime!(
-				redefi_runtime::Runtime, redefi_runtime::RuntimeApi, RedefiRuntimeExecutor,
+				redefi_runtime::Runtime, redefi_runtime::RuntimeApi, HostFunctions,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
@@ -225,7 +233,8 @@ macro_rules! start_node_using_chain_runtime {
 			RuntimeId::Redefi => $start_node_fn::<
 				redefi_runtime::Runtime,
 				redefi_runtime::RuntimeApi,
-				RedefiRuntimeExecutor,
+				HostFunctions,
+				sc_network::NetworkWorker<polkadot_primitives::Block, polkadot_primitives::Hash>,
 			>($config $(, $($args),+)?) $($code)*,
 
 			runtime_id => Err(no_runtime_err!(runtime_id).into()),
