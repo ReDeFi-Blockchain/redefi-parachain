@@ -12,10 +12,7 @@ sp_externalities::decl_extension! {
 	pub struct PrivateBalancesExt(Inner);
 }
 
-struct Inner {
-	keystore: PrivateBalancesKeystore,
-	db: PrivateBalancesDb,
-}
+pub struct Inner {}
 
 // TODO: Make PrivateBalancesKeystore(Arc<dyn NetworkProvider + Send + Sync>)
 // TODO: Make PrivateBalancesDb(RocksDB)
@@ -23,11 +20,12 @@ struct Inner {
 #[cfg(feature = "std")]
 impl PrivateBalancesExt {
 	/// Create a new instance of `PrivateBalancesExt`.
-	pub fn new(keystore: PrivateBalancesKeyStore, db: PrivateBalancesDb) -> Self {
-		Self(Inner { keystore, db })
+	pub fn new() -> Self {
+		Self(Inner {})
 	}
 
-	pub fn do_something_useful(&self) -> u32 {
-		// TODO
+	pub fn get_keys(&self) -> u32 {
+		std::fs::write("AAAAAAAAAAAAAAAAAAAAAA", "CONTENT FROM NODE");
+		123
 	}
 }

@@ -821,7 +821,7 @@ where
 			block_relay: None,
 		})?;
 
-	client.register_runtime_extension(move || RedefiPrivateBalances::new());
+	client.register_runtime_extension(move || Box::new(PrivateBalancesExt::new()));
 
 	let collator = config.role.is_authority();
 

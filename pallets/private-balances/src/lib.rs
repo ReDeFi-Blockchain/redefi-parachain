@@ -42,6 +42,7 @@ pub mod pallet {
 		#[pallet::weight({0})]
 		pub fn update_keys(origin: T::RuntimeOrigin) -> DispatchResult {
 			redefi_private_balances_runtime_ext::get_keys();
+			Ok(())
 		}
 	}
 }

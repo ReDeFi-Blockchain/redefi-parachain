@@ -11549,8 +11549,6 @@ dependencies = [
 [[package]]
 name = "sc-service"
 version = "0.38.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42678fb737ea101658a8288cd3fcc0bff59ef40cd1a1c4f4d4042c3fa17bae41"
 dependencies = [
  "async-trait",
  "directories",

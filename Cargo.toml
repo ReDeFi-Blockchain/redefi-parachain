@@ -21,6 +21,7 @@ inherits = "release"
 
 [patch.crates-io]
 ss58-registry = { git = "https://github.com/ReDeFi-Blockchain/ss58-registry.git", branch = "parachain" }
+sc-service = { path = "patched-deps/sc-service" }
 
 [workspace.dependencies]
 
