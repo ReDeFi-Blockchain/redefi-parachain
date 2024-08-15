@@ -19,15 +19,24 @@ pub mod pallet {
 		type UpdateKeysOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
+	#[pallet::storage]
+	pub(super) type X25519Key<T: Config> =
+		StorageValue<_, redefi_private_balances_runtime_ext::X25519Key, ValueQuery>;
+
 	#[pallet::genesis_config]
 	#[derive(frame_support::DefaultNoBound)]
 	pub struct GenesisConfig<T: Config> {
-		stub: PhantomData<T>,
+		pub key: Option<redefi_private_balances_runtime_ext::X25519Key>,
+		_marker: PhantomData<T>,
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
-		fn build(&self) {}
+		fn build(&self) {
+			if let Some(key) = self.key {
+				<X25519Key<T>>::set(key);
+			}
+		}
 	}
 
 	#[pallet::pallet]

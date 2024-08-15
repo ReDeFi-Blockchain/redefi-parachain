@@ -15,8 +15,8 @@ sp_externalities::decl_extension! {
 	pub struct PrivateBalancesExt(Inner);
 }
 
-pub(crate) type X25519Key = [u8; 32];
-pub(crate) type SharedSecret = [u8; 32];
+pub type X25519Key = [u8; 32];
+pub type SharedSecret = [u8; 32];
 // TODO
 pub struct HttpClientMock;
 

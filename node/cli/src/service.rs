@@ -91,7 +91,7 @@ pub type ExtendHostFunctions = (
 	frame_benchmarking::benchmarking::HostFunctions,
 );
 
-/// Unique native executor instance.
+/// ReDeFi native executor instance.
 #[cfg(feature = "redefi-runtime")]
 pub struct RedefiRuntimeExecutor;
 
