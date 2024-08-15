@@ -1,7 +1,7 @@
 use x25519_dalek::StaticSecret;
 
 use super::{KeyService, SharedSecret, X25519Key};
-use crate::*;
+
 pub struct EcdhKeystore {
 	pub(crate) static_secret: StaticSecret,
 }

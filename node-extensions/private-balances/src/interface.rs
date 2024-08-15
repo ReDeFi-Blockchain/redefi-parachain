@@ -7,6 +7,7 @@ use sp_runtime_interface::runtime_interface;
 
 #[cfg(feature = "std")]
 use crate::PrivateBalancesExt;
+use crate::{SharedSecret, X25519Key};
 
 #[runtime_interface]
 pub trait PrivateBalances {
@@ -14,5 +15,11 @@ pub trait PrivateBalances {
 		self.extension::<PrivateBalancesExt>()
 			.expect("private balances runtime extension not found")
 			.get_keys()
+	}
+
+	fn diffie_hellman(&mut self, their_public: &X25519Key) -> SharedSecret {
+		self.extension::<PrivateBalancesExt>()
+			.expect("private balances runtime extension not found")
+			.diffie_hellman(their_public)
 	}
 }

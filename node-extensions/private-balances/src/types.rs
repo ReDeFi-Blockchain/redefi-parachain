@@ -1,12 +1,9 @@
 use crate::*;
-mod key_store;
-pub use key_store::*;
+mod keystore;
+pub use keystore::*;
 
 mod db;
 pub use db::*;
-
-pub(crate) type X25519Key = [u8; 32];
-pub(crate) type SharedSecret = [u8; 32];
 
 pub trait PrivateBalances: KeyService {}
 

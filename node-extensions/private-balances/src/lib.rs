@@ -7,7 +7,7 @@ pub use interface::get_keys;
 #[cfg(feature = "std")]
 pub use interface::HostFunctions;
 #[cfg(feature = "std")]
-use types::{EcdhKeystore, KeyService, PrivateBalancesDb, SharedSecret, X25519Key};
+use types::{EcdhKeystore, KeyService, PrivateBalancesDb};
 
 #[cfg(feature = "std")]
 sp_externalities::decl_extension! {
@@ -15,6 +15,8 @@ sp_externalities::decl_extension! {
 	pub struct PrivateBalancesExt(Inner);
 }
 
+pub(crate) type X25519Key = [u8; 32];
+pub(crate) type SharedSecret = [u8; 32];
 // TODO
 pub struct HttpClientMock;
 
@@ -44,7 +46,7 @@ impl PrivateBalancesExt {
 		123
 	}
 
-	fn diffie_hellman(&self, their_public: &X25519Key) -> SharedSecret {
+	pub fn diffie_hellman(&self, their_public: &X25519Key) -> SharedSecret {
 		self.key_store.diffie_hellman(their_public)
 	}
 }
