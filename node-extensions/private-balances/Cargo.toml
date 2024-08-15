@@ -1,23 +1,19 @@
 [package]
 authors = ['ReDeFi Network <support@redefi.world>']
+edition.workspace = true
+homepage = 'https://redefi.world'
 name = 'redefi-private-balances-runtime-ext'
 version.workspace = true
-homepage = 'https://redefi.world'
-edition.workspace = true
 
 [dependencies]
 sp-core = { workspace = true }
 sp-externalities = { workspace = true }
 sp-io = { workspace = true }
-sp-std = { workspace = true }
 sp-runtime-interface = { workspace = true }
+sp-std = { workspace = true }
+
+x25519-dalek = { version = "2.0.1", features = ["getrandom", "static_secrets"], optional = true }
 
 [features]
 default = ["std"]
-std = [
-    "sp-core/std",
-    "sp-externalities/std",
-    "sp-io/std",
-    "sp-std/std",
-    "sp-runtime-interface/std"
-]
+std = ["sp-core/std", "sp-externalities/std", "sp-io/std", "sp-runtime-interface/std", "sp-std/std", "x25519-dalek"]
