@@ -1,6 +1,6 @@
-pub use private_balances::get_keys;
 #[cfg(feature = "std")]
 pub use private_balances::HostFunctions;
+pub use private_balances::*;
 #[cfg(feature = "std")]
 use sp_externalities::ExternalitiesExt;
 use sp_runtime_interface::runtime_interface;

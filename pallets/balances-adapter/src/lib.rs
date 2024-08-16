@@ -48,6 +48,7 @@ pub mod pallet {
 			Get,
 		},
 	};
+	use redefi_private_balances_runtime_ext::KeyProvider;
 
 	use super::*;
 
@@ -108,6 +109,8 @@ pub mod pallet {
 		/// and its use does not imply deep checks
 		#[pallet::constant]
 		type ChainLocator: Get<BTreeMap<ChainId, Location>>;
+
+		type KeyProvider: KeyProvider;
 
 		/// Weight information
 		type WeightInfo: WeightInfo;

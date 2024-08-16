@@ -55,3 +55,9 @@ pub mod pallet {
 		}
 	}
 }
+
+impl<T: Config> redefi_private_balances_runtime_ext::KeyProvider for Pallet<T> {
+	fn get_key() -> redefi_private_balances_runtime_ext::X25519Key {
+		<X25519Key<T>>::get()
+	}
+}

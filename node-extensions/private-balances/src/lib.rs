@@ -3,9 +3,9 @@
 mod interface;
 #[cfg(feature = "std")]
 pub mod types;
-pub use interface::get_keys;
 #[cfg(feature = "std")]
 pub use interface::HostFunctions;
+pub use interface::{diffie_hellman, get_keys};
 #[cfg(feature = "std")]
 use types::{EcdhKeystore, KeyService, PrivateBalancesDb};
 
@@ -25,6 +25,10 @@ pub struct Inner {
 	key_store: EcdhKeystore,
 	db: PrivateBalancesDb,
 	http_client: HttpClientMock,
+}
+
+pub trait KeyProvider {
+	fn get_key() -> X25519Key;
 }
 
 // TODO: Make PrivateBalancesKeystore(Arc<dyn NetworkProvider + Send + Sync>)

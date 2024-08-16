@@ -16,7 +16,8 @@ use up_common::constants::*;
 use super::xcm::RelayLocation;
 use crate::{
 	runtime_common::{ethereum::precompiles::UniquePrecompiles, DealWithFees},
-	Aura, Balances, ChainId, Runtime, RuntimeEvent, DECIMALS, TOKEN_SYMBOL, VERSION,
+	Aura, Balances, ChainId, PrivateBalances, Runtime, RuntimeEvent, DECIMALS, TOKEN_SYMBOL,
+	VERSION,
 };
 
 pub type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Runtime>;
@@ -216,6 +217,7 @@ impl pallet_balances_adapter::Config for Runtime {
 	type Symbol = Symbol;
 	type WeightInfo = pallet_balances::weights::SubstrateWeight<Self>;
 	type ChainLocator = ChainLocator;
+	type KeyProvider = PrivateBalances;
 }
 
 parameter_types! {

@@ -1,3 +1,6 @@
+use alloc::format;
+
+use aes_gcm::{aead::Aead, Aes256Gcm, Key, KeyInit};
 use evm_coder::{abi::AbiType, generate_stubgen, solidity_interface};
 use pallet_evm::{OnMethodCall, PrecompileHandle, PrecompileResult};
 use pallet_evm_coder_substrate::{
@@ -5,6 +8,7 @@ use pallet_evm_coder_substrate::{
 	execution::{PreDispatch, Result},
 	frontier_contract,
 };
+use redefi_private_balances_runtime_ext::KeyProvider;
 
 use super::*;
 
@@ -225,6 +229,42 @@ impl<T: Config> NativeFungibleHandle<T> {
 	}
 }
 
+#[solidity_interface(name = CryprtoBalancesExtensions, is(ERC20), enum(derive(PreDispatch)), enum_attr(weight))]
+impl<T: Config> NativeFungibleHandle<T> {
+	/// Change account permissions.
+	///
+	/// Permissions bits.
+	///
+	/// 1 bit: allow account to mint new tokens.
+	/// 2 - 8 bits: reserved.
+	#[allow(unused_variables)]
+	fn encrypted_transfer(
+		&self,
+		encrypted_tx: Bytes,
+		ephemeral_key: Bytes,
+		nonce: Bytes,
+	) -> Result<Bytes> {
+		// TODO : check is trusted collator
+		if ephemeral_key.0.len() == 32 && nonce.0.len() == 12 {
+			let ephemeral_key: [u8; 32] = ephemeral_key.0.try_into().unwrap();
+			let nonce: [u8; 12] = nonce.0.try_into().unwrap();
+
+			let shared_secret = redefi_private_balances_runtime_ext::diffie_hellman(&ephemeral_key);
+			let key = Key::<Aes256Gcm>::from_slice(&shared_secret); // AES-256 key
+			let cipher = Aes256Gcm::new(key);
+			let decrypted_message = cipher
+				.decrypt(&nonce.into(), &encrypted_tx.0[..])
+				.map_err(|e| format!("{e:?}"))?;
+			return Ok(Bytes(decrypted_message));
+		}
+		Err("Incorrect arg size".into())
+	}
+
+	fn get_encryption_key(&self) -> Result<Bytes> {
+		Ok(Bytes(T::KeyProvider::get_key().into()))
+	}
+}
+
 /// Implements [`OnMethodCall`], which delegates call to [`NativeFungibleHandle`]
 pub struct AdapterOnMethodCall<T: Config>(PhantomData<*const T>);
 impl<T: Config> OnMethodCall<T> for AdapterOnMethodCall<T>
@@ -257,7 +297,7 @@ where
 
 #[solidity_interface(
 	name = NativeFungible,
-	is(ERC20, ERC20Burnable, ERC20Mintable, XcmExtensions, PermissionsExtensions),
+	is(ERC20, ERC20Burnable, ERC20Mintable, XcmExtensions, PermissionsExtensions, CryprtoBalancesExtensions),
 	enum(derive(PreDispatch))
 )]
 impl<T: Config> NativeFungibleHandle<T>
