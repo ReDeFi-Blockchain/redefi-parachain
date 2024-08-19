@@ -2,6 +2,7 @@
 
 use std::path::Path;
 
+use aes_gcm::{aead::Aead, Aes256Gcm, Key, KeyInit};
 use sp_core::{H160, U256};
 
 use crate::{
@@ -33,7 +34,7 @@ impl PrivateBalancesExt {
 
 	/// Returns true if has trusted key in keystore.
 	pub fn is_trusted(&self) -> bool {
-		todo!()
+		self.keystore.has_key()
 	}
 
 	/// Trying to decrypt `encrypted_tx`.
@@ -43,7 +44,29 @@ impl PrivateBalancesExt {
 		ephemeral_key: Vec<u8>,
 		nonce: Vec<u8>,
 	) -> Result<Vec<u8>, String> {
-		todo!()
+		if encrypted_tx.is_empty() {
+			return Ok(Vec::new());
+		}
+
+		// TODO(vklachkov): Maybe new type?
+		let Ok(ephemeral_key): Result<[u8; 32], _> = ephemeral_key.try_into() else {
+			return Err("ephemeral_key should be 32 bytes".into());
+		};
+
+		// TODO(vklachkov): Maybe new type?
+		let Ok(nonce): Result<[u8; 12], _> = nonce.try_into() else {
+			return Err("nonce should be 12 bytes".into());
+		};
+
+		let Some(shared_secret) = self.keystore.diffie_hellman(&ephemeral_key) else {
+			return Err("no trusted key found".into());
+		};
+
+		let key = Key::<Aes256Gcm>::from_slice(&shared_secret);
+
+		Aes256Gcm::new(key)
+			.decrypt(&nonce.into(), encrypted_tx.as_slice())
+			.map_err(|e| format!("{e:?}"))
 	}
 
 	/// Get balance of private balance.

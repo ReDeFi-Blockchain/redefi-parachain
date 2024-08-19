@@ -6476,7 +6476,6 @@ dependencies = [
 name = "pallet-balances-adapter"
 version = "0.1.0"
 dependencies = [
- "aes-gcm",
  "bitflags 1.3.2",
  "evm-coder",
  "frame-support",
@@ -9850,6 +9849,7 @@ dependencies = [
 name = "redefi-private-balances-runtime-ext"
 version = "1.9.0"
 dependencies = [
+ "aes-gcm",
  "kvdb-rocksdb",
  "sp-core",
  "sp-database 8.0.0",
