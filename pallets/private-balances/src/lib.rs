@@ -1,6 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
+use alloc::{string::String, vec::Vec};
 
 use frame_support::{pallet_prelude::*, traits::OnRuntimeUpgrade};
 pub use pallet::*;
@@ -49,7 +50,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
 		#[pallet::weight({0})]
-		pub fn update_keys(origin: T::RuntimeOrigin) -> DispatchResult {
+		pub fn update_keys(_origin: T::RuntimeOrigin) -> DispatchResult {
 			// TODO
 			Ok(())
 		}

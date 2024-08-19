@@ -9,7 +9,6 @@ mod extension;
 #[cfg(feature = "std")]
 pub mod db;
 
-#[cfg(feature = "std")]
 pub mod keystore;
 
 #[cfg(feature = "std")]

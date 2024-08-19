@@ -1,5 +1,7 @@
+#[cfg(feature = "std")]
 use x25519_dalek::StaticSecret;
 
+#[cfg(feature = "std")]
 use crate::service::TrustedService;
 
 pub type X25519Key = [u8; 32];

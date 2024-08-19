@@ -821,7 +821,10 @@ where
 			block_relay: None,
 		})?;
 
-	client.register_runtime_extension(move || Box::new(PrivateBalancesExt::new()));
+	let db_config_dir = config.base_path.config_dir(config.chain_spec.id());
+	client.register_runtime_extension(move || {
+		Box::new(PrivateBalancesExt::new(db_config_dir.clone()).unwrap())
+	});
 
 	let collator = config.role.is_authority();
 
