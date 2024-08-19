@@ -65,13 +65,11 @@ impl PrivateBalancesDb {
 		account: H160,
 		amount: U256,
 	) -> Result<(), String> {
-		let Some(current_balance) = self.get_balance(asset, account) else {
-			return Err("account not found".into());
-		};
+		let current_balance = self.get_balance(asset, account).unwrap_or_default();
 
-		let Some(balance) = current_balance.checked_add(amount) else {
-			return Err("balance overflow".into());
-		};
+		let balance = current_balance
+			.checked_add(amount)
+			.ok_or("balance overflow")?;
 
 		let mut transaction = sp_database::Transaction::new();
 
@@ -91,13 +89,11 @@ impl PrivateBalancesDb {
 		account: H160,
 		amount: U256,
 	) -> Result<(), String> {
-		let Some(current_balance) = self.get_balance(asset, account) else {
-			return Err("account not found".into());
-		};
+		let current_balance = self.get_balance(asset, account).unwrap_or_default();
 
-		let Some(balance) = current_balance.checked_sub(amount) else {
-			return Err("balance overflow".into());
-		};
+		let balance = current_balance
+			.checked_sub(amount)
+			.ok_or("not enough balance on account")?;
 
 		let mut transaction = sp_database::Transaction::new();
 
@@ -118,21 +114,17 @@ impl PrivateBalancesDb {
 		to: H160,
 		amount: U256,
 	) -> Result<(), String> {
-		let Some(current_sender_balance) = self.get_balance(asset, from) else {
-			return Err("sender account not found".into());
-		};
+		let current_sender_balance = self.get_balance(asset, from).unwrap_or_default();
 
-		let Some(sender_balance) = current_sender_balance.checked_sub(amount) else {
-			return Err("sender balance overflow".into());
-		};
+		let sender_balance = current_sender_balance
+			.checked_sub(amount)
+			.ok_or("not enough balance on sender account")?;
 
-		let Some(current_recipient_balance) = self.get_balance(asset, to) else {
-			return Err("recipient account not found".into());
-		};
+		let current_recipient_balance = self.get_balance(asset, to).unwrap_or_default();
 
-		let Some(recipient_balance) = current_recipient_balance.checked_add(amount) else {
-			return Err("recipient balance overflow".into());
-		};
+		let recipient_balance = current_recipient_balance
+			.checked_add(amount)
+			.ok_or("recipient balance overflow")?;
 
 		let mut transaction = sp_database::Transaction::new();
 
