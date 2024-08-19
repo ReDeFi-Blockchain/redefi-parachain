@@ -136,7 +136,7 @@ pub mod pallet {
 			};
 
 			// If TrustedAuthorities is empty, change_authorities does nothing.
-			// pallet_aura::Pallet::<T>::change_authorities(authorities);
+			pallet_aura::Pallet::<T>::change_authorities(authorities);
 		}
 	}
 }
