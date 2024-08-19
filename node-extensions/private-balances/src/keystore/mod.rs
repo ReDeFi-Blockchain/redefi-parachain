@@ -1,10 +1,14 @@
 use x25519_dalek::StaticSecret;
 
+use crate::service::TrustedService;
+
 pub type X25519Key = [u8; 32];
 pub type SharedSecret = [u8; 32];
 
+#[cfg(feature = "std")]
 pub trait PrivateBalances: KeyService {}
 
+#[cfg(feature = "std")]
 pub trait KeyService {
 	type SharedSecret;
 	type Public;
@@ -14,13 +18,17 @@ pub trait KeyService {
 	fn diffie_hellman(&self, their_public: &Self::Public) -> Option<Self::SharedSecret>;
 }
 
+#[cfg(feature = "std")]
 pub struct EcdhKeystore {
-	pub(crate) static_secret: Option<StaticSecret>,
+	trusted_service: TrustedService,
+	static_secret: Option<StaticSecret>,
 }
 
+#[cfg(feature = "std")]
 impl EcdhKeystore {
 	pub fn new() -> Self {
 		Self {
+			trusted_service: TrustedService::new(),
 			static_secret: Some(StaticSecret::from([0xAA; 32])),
 		}
 	}
@@ -31,6 +39,7 @@ impl EcdhKeystore {
 	}
 }
 
+#[cfg(feature = "std")]
 impl KeyService for EcdhKeystore {
 	type SharedSecret = SharedSecret;
 

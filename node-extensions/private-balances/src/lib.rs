@@ -1,5 +1,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+use alloc::{string::String, vec::Vec};
+
 #[cfg(feature = "std")]
 mod extension;
 
@@ -14,8 +17,8 @@ pub mod service;
 
 mod interface;
 
+#[cfg(feature = "std")]
 pub use extension::PrivateBalancesExt;
-// Host functions, runtime interface.
 pub use interface::*;
 pub use keystore::X25519Key;
 

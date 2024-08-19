@@ -9851,6 +9851,7 @@ version = "1.9.0"
 dependencies = [
  "aes-gcm",
  "kvdb-rocksdb",
+ "parity-scale-codec",
  "sp-core",
  "sp-database 8.0.0",
  "sp-externalities",

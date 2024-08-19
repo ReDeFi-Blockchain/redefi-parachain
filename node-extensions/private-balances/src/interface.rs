@@ -1,12 +1,11 @@
+use alloc::{string::String, vec::Vec};
+
 #[cfg(feature = "std")]
 use sp_externalities::ExternalitiesExt;
 use sp_runtime_interface::runtime_interface;
 
 #[cfg(feature = "std")]
-use crate::{
-	extension::PrivateBalancesExt,
-	keystore::{SharedSecret, X25519Key},
-};
+use crate::extension::PrivateBalancesExt;
 
 #[cfg(feature = "std")]
 pub type HostFunctions = (private_balances::HostFunctions, trust::HostFunctions);
