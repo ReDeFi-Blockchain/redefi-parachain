@@ -1,14 +1,22 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
+
+use alloc::string::String;
 use core::ops::Deref;
 
 use evm_coder::{types::*, ToLog};
 use frame_support::{
+	ensure,
 	pallet_prelude::*,
+	storage::Key,
 	traits::{
 		fungible::{Dust, Unbalanced},
-		tokens::fungible::{Inspect, Mutate},
+		tokens::{
+			fungible::{Inspect, Mutate},
+			Balance, Fortitude, Precision, Preservation,
+		},
+		Get,
 	},
 };
 pub use pallet::*;
@@ -17,6 +25,7 @@ use pallet_ethereum::Origin as EthereumOrigin;
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use pallet_xcm::{Pallet as PalletXcm, WeightInfo as PalletXcmWeightInfo};
+use redefi_private_balances_runtime_ext::{BalancesProvider, TrustProvider};
 use sp_core::{H160, U256};
 use sp_runtime::TokenError;
 use sp_std::{boxed::Box, collections::btree_map::BTreeMap};
@@ -38,18 +47,6 @@ pub(crate) const LOG_TARGET: &str = "evm::balances-adapter";
 
 #[frame_support::pallet]
 pub mod pallet {
-	use alloc::string::String;
-
-	use frame_support::{
-		ensure,
-		storage::Key,
-		traits::{
-			tokens::{Balance, Fortitude, Precision, Preservation},
-			Get,
-		},
-	};
-	use redefi_private_balances_runtime_ext::KeyProvider;
-
 	use super::*;
 
 	#[pallet::error]
@@ -110,7 +107,9 @@ pub mod pallet {
 		#[pallet::constant]
 		type ChainLocator: Get<BTreeMap<ChainId, Location>>;
 
-		type KeyProvider: KeyProvider;
+		type TrustProvider: TrustProvider;
+
+		type BalancesProvider: BalancesProvider<Account = H160, Balance = U256>;
 
 		/// Weight information
 		type WeightInfo: WeightInfo;

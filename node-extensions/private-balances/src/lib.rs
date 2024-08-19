@@ -1,56 +1,49 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(feature = "std")]
+mod extension;
+
+#[cfg(feature = "std")]
+pub mod db;
+
+#[cfg(feature = "std")]
+pub mod keystore;
+
+#[cfg(feature = "std")]
+pub mod service;
+
 mod interface;
-#[cfg(feature = "std")]
-pub mod types;
-#[cfg(feature = "std")]
-pub use interface::HostFunctions;
-pub use interface::{diffie_hellman, get_keys};
-#[cfg(feature = "std")]
-use types::{EcdhKeystore, KeyService, PrivateBalancesDb};
 
-#[cfg(feature = "std")]
-sp_externalities::decl_extension! {
-	/// TODO
-	pub struct PrivateBalancesExt(Inner);
+pub use extension::PrivateBalancesExt;
+// Host functions, runtime interface.
+pub use interface::*;
+pub use keystore::X25519Key;
+
+pub trait TrustProvider {
+	fn is_trusted() -> bool;
+
+	fn get_key() -> Option<X25519Key>;
+
+	fn decrypt(
+		encrypted_tx: Vec<u8>,
+		ephemeral_key: Vec<u8>,
+		nonce: Vec<u8>,
+	) -> Result<Vec<u8>, String>;
 }
 
-pub type X25519Key = [u8; 32];
-pub type SharedSecret = [u8; 32];
-// TODO
-pub struct HttpClientMock;
+pub trait BalancesProvider {
+	type Account;
+	type Balance;
 
-#[cfg(feature = "std")]
-pub struct Inner {
-	key_store: EcdhKeystore,
-	db: PrivateBalancesDb,
-	http_client: HttpClientMock,
-}
+	fn get(account: Self::Account) -> Option<Self::Balance>;
 
-pub trait KeyProvider {
-	fn get_key() -> X25519Key;
-}
+	fn mint(account: Self::Account, amount: Self::Balance) -> Result<(), String>;
 
-// TODO: Make PrivateBalancesKeystore(Arc<dyn NetworkProvider + Send + Sync>)
-// TODO: Make PrivateBalancesDb(RocksDB)
+	fn burn(account: Self::Account, amount: Self::Balance) -> Result<(), String>;
 
-#[cfg(feature = "std")]
-impl PrivateBalancesExt {
-	/// Create a new instance of `PrivateBalancesExt`.
-	pub fn new() -> Self {
-		Self(Inner {
-			key_store: EcdhKeystore::new(),
-			db: PrivateBalancesDb,
-			http_client: HttpClientMock,
-		})
-	}
-
-	pub fn get_keys(&self) -> u32 {
-		std::fs::write("AAAAAAAAAAAAAAAAAAAAAA", "CONTENT FROM NODE");
-		123
-	}
-
-	pub fn diffie_hellman(&self, their_public: &X25519Key) -> SharedSecret {
-		self.key_store.diffie_hellman(their_public)
-	}
+	fn transfer(
+		from: Self::Account,
+		to: Self::Account,
+		amount: Self::Balance,
+	) -> Result<(), String>;
 }

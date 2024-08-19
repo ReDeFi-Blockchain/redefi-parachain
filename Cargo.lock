@@ -3122,7 +3122,7 @@ dependencies = [
  "smallvec",
  "sp-blockchain",
  "sp-core",
- "sp-database",
+ "sp-database 10.0.0",
  "sp-runtime",
 ]
 
@@ -3526,7 +3526,7 @@ dependencies = [
  "sp-api",
  "sp-blockchain",
  "sp-core",
- "sp-database",
+ "sp-database 10.0.0",
  "sp-externalities",
  "sp-inherents",
  "sp-io",
@@ -9850,7 +9850,9 @@ dependencies = [
 name = "redefi-private-balances-runtime-ext"
 version = "1.9.0"
 dependencies = [
+ "kvdb-rocksdb",
  "sp-core",
+ "sp-database 8.0.0",
  "sp-externalities",
  "sp-io",
  "sp-runtime-interface",
@@ -10736,7 +10738,7 @@ dependencies = [
  "sp-blockchain",
  "sp-consensus",
  "sp-core",
- "sp-database",
+ "sp-database 10.0.0",
  "sp-externalities",
  "sp-runtime",
  "sp-state-machine",
@@ -10767,7 +10769,7 @@ dependencies = [
  "sp-arithmetic",
  "sp-blockchain",
  "sp-core",
- "sp-database",
+ "sp-database 10.0.0",
  "sp-runtime",
  "sp-state-machine",
  "sp-trie",
@@ -12516,7 +12518,7 @@ dependencies = [
  "schnellru",
  "sp-api",
  "sp-consensus",
- "sp-database",
+ "sp-database 10.0.0",
  "sp-runtime",
  "sp-state-machine",
  "thiserror",
@@ -12700,6 +12702,16 @@ dependencies = [
  "quote",
  "sp-crypto-hashing",
  "syn 2.0.58",
+]
+
+[[package]]
+name = "sp-database"
+version = "8.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ab25f79468af89010a8eb84e6bf56068b59929a55291c03519f47208360f3ebe"
+dependencies = [
+ "kvdb",
+ "parking_lot 0.12.1",
 ]
 
 [[package]]

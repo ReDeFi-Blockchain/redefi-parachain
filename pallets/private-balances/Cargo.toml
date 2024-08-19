@@ -33,7 +33,6 @@ std = [
 	"sp-std/std",
 	"sp-weights/std",
 	"parity-scale-codec/std",
-	"scale-info/std",
-	"redefi-private-balances-runtime-ext/std"
+	"scale-info/std"
 ]
 try-runtime = ["frame-support/try-runtime"]
