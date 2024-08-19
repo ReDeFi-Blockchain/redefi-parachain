@@ -5,10 +5,15 @@ use alloc::{string::String, vec::Vec};
 
 use frame_support::{pallet_prelude::*, traits::OnRuntimeUpgrade};
 pub use pallet::*;
+use sp_core::hex2array;
 
 pub mod migration;
 
 const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+
+/// B1ind F0g
+const PRIVATE_BALANCES_TREASURY_ADDRESS: [u8; 20] =
+	hex2array!("000000000000000000000000000000000000B1F0");
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -65,6 +70,10 @@ impl<T: Config> redefi_private_balances_runtime_ext::TrustProvider for Pallet<T>
 
 	fn get_key() -> Option<redefi_private_balances_runtime_ext::X25519Key> {
 		<X25519Key<T>>::try_get().ok()
+	}
+
+	fn get_treasury_address() -> sp_core::H160 {
+		sp_core::H160(PRIVATE_BALANCES_TREASURY_ADDRESS)
 	}
 
 	fn decrypt(

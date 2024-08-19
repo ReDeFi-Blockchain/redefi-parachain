@@ -21,11 +21,14 @@ mod interface;
 pub use extension::PrivateBalancesExt;
 pub use interface::*;
 pub use keystore::X25519Key;
+use sp_core::H160;
 
 pub trait TrustProvider {
 	fn is_trusted() -> bool;
 
 	fn get_key() -> Option<X25519Key>;
+
+	fn get_treasury_address() -> H160;
 
 	fn decrypt(
 		encrypted_tx: Vec<u8>,

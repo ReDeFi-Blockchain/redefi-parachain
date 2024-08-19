@@ -244,9 +244,15 @@ impl<T: Config> NativeFungibleHandle<T> {
 			return Err("insufficient balance".into());
 		}
 
-		// TODO(vklachkov): Transfer from treasury.
-
 		T::BalancesProvider::burn(caller, amount).unwrap();
+
+		// TODO(vklachkov): Transfer from treasury.
+		<Pallet<T>>::transfer(
+			&T::TrustProvider::get_treasury_address(),
+			&caller,
+			amount.try_into().map_err(|_| "amount overflow")?,
+		)
+		.map_err(dispatch_to_evm::<T>)?;
 
 		Ok(())
 	}
@@ -262,6 +268,12 @@ impl<T: Config> NativeFungibleHandle<T> {
 		}
 
 		// TODO(vklachkov): Transfer to treasury.
+		<Pallet<T>>::transfer(
+			&caller,
+			&T::TrustProvider::get_treasury_address(),
+			amount.try_into().map_err(|_| "amount overflow")?,
+		)
+		.map_err(dispatch_to_evm::<T>)?;
 
 		T::BalancesProvider::mint(caller, amount).unwrap();
 
