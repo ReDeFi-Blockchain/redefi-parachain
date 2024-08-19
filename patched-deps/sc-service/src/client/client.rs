@@ -115,7 +115,7 @@ where
 	config: ClientConfig<Block>,
 	telemetry: Option<TelemetryHandle>,
 	unpin_worker_sender: TracingUnboundedSender<UnpinWorkerMessage<Block>>,
-	// Collection of custom runtime extensions constructors.
+	// ReDeFi. Collection of custom runtime extensions constructors.
 	runtime_extensions: Mutex<Vec<Box<dyn Fn() -> Box<dyn sp_externalities::Extension> + Send>>>,
 	_phantom: PhantomData<RA>,
 }
@@ -467,6 +467,7 @@ where
 			config,
 			telemetry,
 			unpin_worker_sender,
+			// ReDeFi.
 			runtime_extensions: Default::default(),
 			_phantom: Default::default(),
 		})
@@ -484,7 +485,7 @@ where
 		&self.finality_notification_sinks
 	}
 
-	///
+	/// ReDeFi.
 	pub fn register_runtime_extension(
 		&self,
 		ext: impl Fn() -> Box<dyn sp_externalities::Extension> + Send + 'static,
@@ -1753,6 +1754,7 @@ where
 	fn runtime_api(&self) -> ApiRef<Self::Api> {
 		let mut runtime = RA::construct_runtime_api(self);
 
+		// ReDeFi.
 		for ext in self.runtime_extensions.lock().iter() {
 			runtime.register_extension(ext());
 		}
@@ -1771,6 +1773,11 @@ where
 	type StateBackend = B::State;
 
 	fn call_api_at(&self, params: CallApiAtParams<Block>) -> Result<Vec<u8>, sp_api::ApiError> {
+		// ReDeFi.
+		for ext in self.runtime_extensions.lock().iter() {
+			params.extensions.borrow_mut().register(ext());
+		}
+
 		self.executor
 			.contextual_call(
 				params.at,
@@ -1804,6 +1811,11 @@ where
 				.execution_extensions()
 				.extensions(at, block_number),
 		);
+
+		// ReDeFi.
+		for ext in self.runtime_extensions.lock().iter() {
+			extensions.register(ext());
+		}
 
 		Ok(())
 	}
