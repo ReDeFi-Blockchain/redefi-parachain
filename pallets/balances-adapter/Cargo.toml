@@ -53,5 +53,5 @@ std = [
 	"staging-xcm-executor/std",
 	"staging-xcm/std",
 ]
-stubgen = ["evm-coder/stubgen"]
+stubgen = ["evm-coder/stubgen", "redefi-private-balances-runtime-ext/std"]
 try-runtime = ["frame-support/try-runtime"]
