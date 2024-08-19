@@ -67,7 +67,7 @@ use sc_rpc::SubscriptionTaskExecutor;
 use sc_service::{Configuration, PartialComponents, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use serde::{Deserialize, Serialize};
-use sp_api::{ApiExt, ProvideRuntimeApi};
+use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraAuthorityPair;

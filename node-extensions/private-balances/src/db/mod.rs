@@ -2,7 +2,7 @@
 
 use std::{
 	path::{Path, PathBuf},
-	sync::Arc,
+	sync::{Arc, OnceLock},
 };
 
 use parity_scale_codec::Encode;
@@ -12,6 +12,7 @@ use sp_database::Database;
 const DB_HASH_LEN: usize = 32;
 /// Hash type that this backend uses for the database.
 pub type DbHash = [u8; DB_HASH_LEN];
+type Db = Arc<dyn Database<DbHash>>;
 
 mod columns {
 	pub const NUM_COLUMNS: u32 = 2;
@@ -26,14 +27,20 @@ struct Key {
 	account: H160,
 }
 
+static DATABASE_INSTANCE: OnceLock<Db> = OnceLock::new();
+
 pub struct PrivateBalancesDb {
-	db: Arc<dyn Database<DbHash>>,
+	db: Db,
 }
 
 impl PrivateBalancesDb {
 	pub fn new(db_config_dir: impl AsRef<Path>) -> Result<Self, String> {
-		let path = Self::get_file_path(db_config_dir, "private_balances_rkdb");
-		let db = Self::open_database(path)?;
+		let db = DATABASE_INSTANCE
+			.get_or_try_init(|| {
+				let path = Self::get_file_path(db_config_dir, "private_balances_rkdb");
+				Self::open_database(path)
+			})?
+			.clone();
 
 		Ok(Self { db })
 	}

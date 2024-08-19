@@ -1,3 +1,4 @@
+#![feature(once_cell_try)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
