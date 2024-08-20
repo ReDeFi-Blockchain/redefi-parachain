@@ -12,7 +12,7 @@ use crate::{
 };
 
 sp_externalities::decl_extension! {
-	/// TODO
+	/// Runtime extensions for private balances.
 	pub struct PrivateBalancesExt(Inner);
 }
 
@@ -21,7 +21,6 @@ pub struct Inner {
 	keystore: EcdhKeystore,
 }
 
-// TODO(vklachkov): Support assets.
 impl PrivateBalancesExt {
 	/// Create a new instance of `PrivateBalancesExt`.
 	pub fn new(db_config_dir: impl AsRef<Path>) -> Result<Self, String> {
@@ -69,22 +68,28 @@ impl PrivateBalancesExt {
 	}
 
 	/// Get balance of private balance.
-	pub fn get_balance(&self, account: H160) -> Option<U256> {
-		self.db.get_balance(None, account)
+	pub fn get_balance(&self, asset: Option<u128>, account: H160) -> Option<U256> {
+		self.db.get_balance(asset, account)
 	}
 
 	/// Increase balance of given account.
-	pub fn mint(&self, account: H160, amount: U256) -> Result<(), String> {
-		self.db.increase_balance(None, account, amount)
+	pub fn mint(&self, asset: Option<u128>, account: H160, amount: U256) -> Result<(), String> {
+		self.db.increase_balance(asset, account, amount)
 	}
 
 	/// Decrease balance of given account.
-	pub fn burn(&self, account: H160, amount: U256) -> Result<(), String> {
-		self.db.decrease_balance(None, account, amount)
+	pub fn burn(&self, asset: Option<u128>, account: H160, amount: U256) -> Result<(), String> {
+		self.db.decrease_balance(asset, account, amount)
 	}
 
 	/// Decrease balance of first account and increase of second atomically.
-	pub fn transfer(&self, from: H160, to: H160, amount: U256) -> Result<(), String> {
-		self.db.transfer(None, from, to, amount)
+	pub fn transfer(
+		&self,
+		asset: Option<u128>,
+		from: H160,
+		to: H160,
+		amount: U256,
+	) -> Result<(), String> {
+		self.db.transfer(asset, from, to, amount)
 	}
 }

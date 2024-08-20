@@ -133,19 +133,11 @@ contract PrivateBalancesExtensions is Dummy, ERC165, ERC20 {
 	}
 	/// @dev EVM selector for this function is: 0x1dc9eb80,
 	///  or in textual repr: getEncryptionKey()
-	function getEncryptionKey() public view returns (OptionBytes memory) {
+	function getEncryptionKey() public view returns (bytes memory) {
 		require(false, stub_error);
 		dummy;
-		return OptionBytes(false, hex"");
+		return hex"";
 	}
-}
-
-/// Optional value
-struct OptionBytes {
-/// Shows the status of accessibility of value
-	bool status;
-/// Actual value if `status` is true
-	bytes value;
 }
 
 /// @dev the ERC-165 identifier for this interface is 0xd901570d

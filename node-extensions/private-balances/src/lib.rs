@@ -2,6 +2,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
+#[cfg(not(feature = "std"))]
 use alloc::{string::String, vec::Vec};
 
 #[cfg(feature = "std")]
@@ -26,7 +27,7 @@ use sp_core::H160;
 pub trait TrustProvider {
 	fn is_trusted() -> bool;
 
-	fn get_key() -> Option<X25519Key>;
+	fn get_public_key() -> X25519Key;
 
 	fn get_treasury_address() -> H160;
 
@@ -39,15 +40,25 @@ pub trait TrustProvider {
 
 pub trait BalancesProvider {
 	type Account;
+	type Asset;
 	type Balance;
 
-	fn get(account: Self::Account) -> Option<Self::Balance>;
+	fn get(asset: Option<Self::Asset>, account: Self::Account) -> Option<Self::Balance>;
 
-	fn mint(account: Self::Account, amount: Self::Balance) -> Result<(), String>;
+	fn mint(
+		asset: Option<Self::Asset>,
+		account: Self::Account,
+		amount: Self::Balance,
+	) -> Result<(), String>;
 
-	fn burn(account: Self::Account, amount: Self::Balance) -> Result<(), String>;
+	fn burn(
+		asset: Option<Self::Asset>,
+		account: Self::Account,
+		amount: Self::Balance,
+	) -> Result<(), String>;
 
 	fn transfer(
+		asset: Option<Self::Asset>,
 		from: Self::Account,
 		to: Self::Account,
 		amount: Self::Balance,

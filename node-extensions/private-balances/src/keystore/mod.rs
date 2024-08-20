@@ -23,7 +23,7 @@ pub trait KeyService {
 #[cfg(feature = "std")]
 pub struct EcdhKeystore {
 	trusted_service: TrustedService,
-	static_secret: Option<StaticSecret>,
+	static_secret: std::cell::RefCell<Option<StaticSecret>>,
 }
 
 #[cfg(feature = "std")]
@@ -31,13 +31,16 @@ impl EcdhKeystore {
 	pub fn new() -> Self {
 		Self {
 			trusted_service: TrustedService::new(),
-			static_secret: Some(StaticSecret::from([0xAA; 32])),
+			static_secret: Default::default(),
 		}
 	}
 
 	fn get_static_secret(&self) -> Option<StaticSecret> {
-		// TODO(vklachkov): Request key from service
-		self.static_secret.clone()
+		let secret = self.trusted_service.get_key(());
+
+		self.static_secret.borrow_mut().clone_from(&secret);
+
+		secret
 	}
 }
 

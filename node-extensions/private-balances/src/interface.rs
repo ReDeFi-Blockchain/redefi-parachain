@@ -35,29 +35,45 @@ pub use trust::{is_trusted, try_decrypt};
 // FIXME(vklachkov): Replace [u8; 20] with H160 and [u8; 32] with U256 without contributing to polkadot-sdk.
 #[runtime_interface]
 pub trait PrivateBalances {
-	fn get_balance(&mut self, account: [u8; 20]) -> Option<[u8; 32]> {
+	fn get_balance(&mut self, asset: Option<u128>, account: [u8; 20]) -> Option<[u8; 32]> {
 		self.extension::<PrivateBalancesExt>()
 			.expect("private balances runtime extension not found")
-			.get_balance(account.into())
+			.get_balance(asset, account.into())
 			.map(Into::into)
 	}
 
-	fn mint(&mut self, account: [u8; 20], amount: [u8; 32]) -> Result<(), String> {
+	fn mint(
+		&mut self,
+		asset: Option<u128>,
+		account: [u8; 20],
+		amount: [u8; 32],
+	) -> Result<(), String> {
 		self.extension::<PrivateBalancesExt>()
 			.expect("private balances runtime extension not found")
-			.mint(account.into(), amount.into())
+			.mint(asset, account.into(), amount.into())
 	}
 
-	fn burn(&mut self, account: [u8; 20], amount: [u8; 32]) -> Result<(), String> {
+	fn burn(
+		&mut self,
+		asset: Option<u128>,
+		account: [u8; 20],
+		amount: [u8; 32],
+	) -> Result<(), String> {
 		self.extension::<PrivateBalancesExt>()
 			.expect("private balances runtime extension not found")
-			.burn(account.into(), amount.into())
+			.burn(asset, account.into(), amount.into())
 	}
 
-	fn transfer(&mut self, from: [u8; 20], to: [u8; 20], amount: [u8; 32]) -> Result<(), String> {
+	fn transfer(
+		&mut self,
+		asset: Option<u128>,
+		from: [u8; 20],
+		to: [u8; 20],
+		amount: [u8; 32],
+	) -> Result<(), String> {
 		self.extension::<PrivateBalancesExt>()
 			.expect("private balances runtime extension not found")
-			.transfer(from.into(), to.into(), amount.into())
+			.transfer(asset, from.into(), to.into(), amount.into())
 	}
 }
 

@@ -217,7 +217,6 @@ impl pallet_balances_adapter::Config for Runtime {
 	type Symbol = Symbol;
 	type WeightInfo = pallet_balances::weights::SubstrateWeight<Self>;
 	type ChainLocator = ChainLocator;
-	// FIXME(vklachkov): Pallet private balances should not be provider for trust or balances.
 	type TrustProvider = PrivateBalances;
 	type BalancesProvider = PrivateBalances;
 }

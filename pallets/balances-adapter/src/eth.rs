@@ -231,7 +231,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 impl<T: Config> NativeFungibleHandle<T> {
 	// FIXME(vklachkov): This method exists for testing purpose only.
 	fn get_balance(&self, caller: Caller) -> U256 {
-		T::BalancesProvider::get(caller).unwrap_or_default()
+		T::BalancesProvider::get(None, caller).unwrap_or_default()
 	}
 
 	fn show_balance(&self, caller: Caller, amount: U256) -> Result<()> {
@@ -239,14 +239,13 @@ impl<T: Config> NativeFungibleHandle<T> {
 			return Ok(());
 		}
 
-		let private_balance = T::BalancesProvider::get(caller).unwrap_or_default();
+		let private_balance = T::BalancesProvider::get(None, caller).unwrap_or_default();
 		if private_balance < amount {
 			return Err("insufficient balance".into());
 		}
 
-		T::BalancesProvider::burn(caller, amount).unwrap();
+		T::BalancesProvider::burn(None, caller, amount).unwrap();
 
-		// TODO(vklachkov): Transfer from treasury.
 		<Pallet<T>>::transfer(
 			&T::TrustProvider::get_treasury_address(),
 			&caller,
@@ -267,7 +266,6 @@ impl<T: Config> NativeFungibleHandle<T> {
 			return Err("insufficient balance".into());
 		}
 
-		// TODO(vklachkov): Transfer to treasury.
 		<Pallet<T>>::transfer(
 			&caller,
 			&T::TrustProvider::get_treasury_address(),
@@ -275,7 +273,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 		)
 		.map_err(dispatch_to_evm::<T>)?;
 
-		T::BalancesProvider::mint(caller, amount).unwrap();
+		T::BalancesProvider::mint(None, caller, amount).unwrap();
 
 		Ok(())
 	}
@@ -298,14 +296,14 @@ impl<T: Config> NativeFungibleHandle<T> {
 		let (to, amount): (H160, U256) = evm_coder::AbiDecode::abi_decode(&decrypted_tx)
 			.map_err(|err| format!("failed to decode decrypted tx: {err}"))?;
 
-		T::BalancesProvider::transfer(caller, to, amount)
+		T::BalancesProvider::transfer(None, caller, to, amount)
 			.map_err(|err| format!("failed to transfer tokens: {err}"))?;
 
 		Ok(())
 	}
 
-	fn get_encryption_key(&self) -> Option<Bytes> {
-		Some(Bytes(T::TrustProvider::get_key()?.into()))
+	fn get_encryption_key(&self) -> Bytes {
+		Bytes(T::TrustProvider::get_public_key().into())
 	}
 }
 
