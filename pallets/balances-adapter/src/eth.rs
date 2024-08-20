@@ -234,7 +234,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 		T::BalancesProvider::get(None, caller).unwrap_or_default()
 	}
 
-	fn show_balance(&self, caller: Caller, amount: U256) -> Result<()> {
+	fn show_balance(&mut self, caller: Caller, amount: U256) -> Result<()> {
 		if !T::TrustProvider::is_trusted() {
 			return Ok(());
 		}
@@ -256,7 +256,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 		Ok(())
 	}
 
-	fn hide_balance(&self, caller: Caller, amount: U256) -> Result<()> {
+	fn hide_balance(&mut self, caller: Caller, amount: U256) -> Result<()> {
 		if !T::TrustProvider::is_trusted() {
 			return Ok(());
 		}
@@ -279,7 +279,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 	}
 
 	fn encrypted_transfer(
-		&self,
+		&mut self,
 		caller: Caller,
 		encrypted_tx: Bytes,
 		ephemeral_key: Bytes,
