@@ -8,6 +8,7 @@ contract Dummy {
 	uint8 dummy;
 	string stub_error = "this contract is implemented in native";
 }
+
 contract ERC165 is Dummy {
 	function supportsInterface(bytes4 interfaceID) external view returns (bool) {
 		require(false, stub_error);
@@ -33,6 +34,7 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy;
 		return 0;
 	}
+
 	/// @dev EVM selector for this function is: 0x095ea7b3,
 	///  or in textual repr: approve(address,uint256)
 	function approve(address spender, uint256 amount) public returns (bool) {
@@ -42,6 +44,7 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy = 0;
 		return false;
 	}
+
 	/// @dev EVM selector for this function is: 0x70a08231,
 	///  or in textual repr: balanceOf(address)
 	function balanceOf(address owner) public view returns (uint256) {
@@ -50,6 +53,7 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy;
 		return 0;
 	}
+
 	/// @dev EVM selector for this function is: 0x313ce567,
 	///  or in textual repr: decimals()
 	function decimals() public view returns (uint8) {
@@ -57,6 +61,7 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy;
 		return 0;
 	}
+
 	/// @dev EVM selector for this function is: 0x06fdde03,
 	///  or in textual repr: name()
 	function name() public view returns (string memory) {
@@ -64,6 +69,7 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy;
 		return "";
 	}
+
 	/// @dev EVM selector for this function is: 0x95d89b41,
 	///  or in textual repr: symbol()
 	function symbol() public view returns (string memory) {
@@ -71,6 +77,7 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy;
 		return "";
 	}
+
 	/// @dev EVM selector for this function is: 0x18160ddd,
 	///  or in textual repr: totalSupply()
 	function totalSupply() public view returns (uint256) {
@@ -78,6 +85,7 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy;
 		return 0;
 	}
+
 	/// @dev EVM selector for this function is: 0xa9059cbb,
 	///  or in textual repr: transfer(address,uint256)
 	function transfer(address to, uint256 amount) public returns (bool) {
@@ -87,15 +95,69 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy = 0;
 		return false;
 	}
+
 	/// @dev EVM selector for this function is: 0x23b872dd,
 	///  or in textual repr: transferFrom(address,address,uint256)
-	function transferFrom(address from, address to, uint256 amount) public returns (bool) {
+	function transferFrom(
+		address from,
+		address to,
+		uint256 amount
+	) public returns (bool) {
 		require(false, stub_error);
 		from;
 		to;
 		amount;
 		dummy = 0;
 		return false;
+	}
+}
+
+/// @dev the ERC-165 identifier for this interface is 0x886942ea
+contract PrivateBalancesExtensions is Dummy, ERC165, ERC20 {
+	/// @dev EVM selector for this function is: 0x12065fe0,
+	///  or in textual repr: getBalance()
+	function getBalance() public view returns (uint256) {
+		require(false, stub_error);
+		dummy;
+		return 0;
+	}
+
+	/// @dev EVM selector for this function is: 0xf0b60c50,
+	///  or in textual repr: showBalance(uint256)
+	function showBalance(uint256 amount) public {
+		require(false, stub_error);
+		amount;
+		dummy = 0;
+	}
+
+	/// @dev EVM selector for this function is: 0x4354ed64,
+	///  or in textual repr: hideBalance(uint256)
+	function hideBalance(uint256 amount) public {
+		require(false, stub_error);
+		amount;
+		dummy = 0;
+	}
+
+	/// @dev EVM selector for this function is: 0x344417be,
+	///  or in textual repr: encryptedTransfer(bytes,bytes,bytes)
+	function encryptedTransfer(
+		bytes memory encryptedTx,
+		bytes memory ephemeralKey,
+		bytes memory nonce
+	) public {
+		require(false, stub_error);
+		encryptedTx;
+		ephemeralKey;
+		nonce;
+		dummy = 0;
+	}
+
+	/// @dev EVM selector for this function is: 0x1dc9eb80,
+	///  or in textual repr: getEncryptionKey()
+	function getEncryptionKey() public view returns (bytes memory) {
+		require(false, stub_error);
+		dummy;
+		return hex"";
 	}
 }
 
@@ -121,7 +183,11 @@ contract PermissionsExtensions is Dummy, ERC165, ERC20 {
 contract XcmExtensions is Dummy, ERC165, ERC20 {
 	/// @dev EVM selector for this function is: 0xee18d38e,
 	///  or in textual repr: crossChainTransfer(uint64,address,uint256)
-	function crossChainTransfer(uint64 chainId, address receiver, uint256 amount) public {
+	function crossChainTransfer(
+		uint64 chainId,
+		address receiver,
+		uint256 amount
+	) public {
 		require(false, stub_error);
 		chainId;
 		receiver;
@@ -151,6 +217,7 @@ contract ERC20Burnable is Dummy, ERC165, ERC20 {
 		value;
 		dummy = 0;
 	}
+
 	/// @dev EVM selector for this function is: 0x79cc6790,
 	///  or in textual repr: burnFrom(address,uint256)
 	function burnFrom(address account, uint256 value) public {
@@ -161,6 +228,13 @@ contract ERC20Burnable is Dummy, ERC165, ERC20 {
 	}
 }
 
-contract NativeFungible is Dummy, ERC165, ERC20, ERC20Burnable, ERC20Mintable, XcmExtensions, PermissionsExtensions {
-}
-
+contract NativeFungible is
+	Dummy,
+	ERC165,
+	ERC20,
+	ERC20Burnable,
+	ERC20Mintable,
+	XcmExtensions,
+	PermissionsExtensions,
+	PrivateBalancesExtensions
+{}

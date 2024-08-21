@@ -3122,7 +3122,7 @@ dependencies = [
  "smallvec",
  "sp-blockchain",
  "sp-core",
- "sp-database",
+ "sp-database 10.0.0",
  "sp-runtime",
 ]
 
@@ -3526,7 +3526,7 @@ dependencies = [
  "sp-api",
  "sp-blockchain",
  "sp-core",
- "sp-database",
+ "sp-database 10.0.0",
  "sp-externalities",
  "sp-inherents",
  "sp-io",
@@ -6488,6 +6488,7 @@ dependencies = [
  "pallet-evm-coder-substrate",
  "pallet-xcm",
  "parity-scale-codec",
+ "redefi-private-balances-runtime-ext",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -7155,6 +7156,23 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-private-balances"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "redefi-private-balances-runtime-ext",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-weights",
 ]
 
 [[package]]
@@ -9784,6 +9802,7 @@ dependencies = [
  "polkadot-cli",
  "polkadot-primitives",
  "polkadot-service",
+ "redefi-private-balances-runtime-ext",
  "redefi-runtime",
  "sc-basic-authorship",
  "sc-chain-spec",
@@ -9814,6 +9833,7 @@ dependencies = [
  "sp-offchain",
  "sp-runtime",
  "sp-session",
+ "sp-std",
  "sp-timestamp",
  "sp-transaction-pool",
  "substrate-build-script-utils",
@@ -9823,6 +9843,22 @@ dependencies = [
  "try-runtime-cli",
  "up-common",
  "up-data-structs",
+]
+
+[[package]]
+name = "redefi-private-balances-runtime-ext"
+version = "1.9.0"
+dependencies = [
+ "aes-gcm",
+ "kvdb-rocksdb",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-database 8.0.0",
+ "sp-externalities",
+ "sp-io",
+ "sp-runtime-interface",
+ "sp-std",
+ "x25519-dalek 2.0.1",
 ]
 
 [[package]]
@@ -9867,6 +9903,7 @@ dependencies = [
  "pallet-evm-precompile-simple",
  "pallet-message-queue",
  "pallet-preimage",
+ "pallet-private-balances",
  "pallet-private-balances-aura-ext",
  "pallet-session",
  "pallet-sudo",
@@ -10702,7 +10739,7 @@ dependencies = [
  "sp-blockchain",
  "sp-consensus",
  "sp-core",
- "sp-database",
+ "sp-database 10.0.0",
  "sp-externalities",
  "sp-runtime",
  "sp-state-machine",
@@ -10733,7 +10770,7 @@ dependencies = [
  "sp-arithmetic",
  "sp-blockchain",
  "sp-core",
- "sp-database",
+ "sp-database 10.0.0",
  "sp-runtime",
  "sp-state-machine",
  "sp-trie",
@@ -11518,8 +11555,6 @@ dependencies = [
 [[package]]
 name = "sc-service"
 version = "0.38.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42678fb737ea101658a8288cd3fcc0bff59ef40cd1a1c4f4d4042c3fa17bae41"
 dependencies = [
  "async-trait",
  "directories",
@@ -12484,7 +12519,7 @@ dependencies = [
  "schnellru",
  "sp-api",
  "sp-consensus",
- "sp-database",
+ "sp-database 10.0.0",
  "sp-runtime",
  "sp-state-machine",
  "thiserror",
@@ -12668,6 +12703,16 @@ dependencies = [
  "quote",
  "sp-crypto-hashing",
  "syn 2.0.58",
+]
+
+[[package]]
+name = "sp-database"
+version = "8.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ab25f79468af89010a8eb84e6bf56068b59929a55291c03519f47208360f3ebe"
+dependencies = [
+ "kvdb",
+ "parking_lot 0.12.1",
 ]
 
 [[package]]

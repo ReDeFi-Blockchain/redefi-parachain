@@ -54,7 +54,7 @@ pub mod pallet {
 	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			Pallet::<T>::initialize_authorities(pallet_aura::Pallet::<T>::authorities());
-			Pallet::<T>::initialize_trusted_authorities(self.trusted_authorities.clone());
+			Pallet::<T>::initialize_trusted_authorities(Default::default());
 		}
 	}
 

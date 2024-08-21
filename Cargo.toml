@@ -21,6 +21,7 @@ inherits = "release"
 
 [patch.crates-io]
 ss58-registry = { git = "https://github.com/ReDeFi-Blockchain/ss58-registry.git", branch = "parachain" }
+sc-service = { path = "patched-deps/sc-service" }
 
 [workspace.dependencies]
 
@@ -34,7 +35,9 @@ precompile-utils-macro = { path = "runtime/common/ethereum/precompiles/utils/mac
 uc-rpc = { path = "client/rpc" }
 up-common = { path = "primitives/common", default-features = false }
 up-data-structs = { path = "primitives/data-structs", default-features = false }
+pallet-private-balances = { path = "pallets/private-balances", default-features = false }
 pallet-private-balances-aura-ext = { path = "pallets/private-balances-aura-ext", default-features = false }
+redefi-private-balances-runtime-ext = { path = "node-extensions/private-balances", default-features = false }
 
 # Redefi: Runtimes
 redefi-runtime = { path = "runtime/redefi" }
@@ -132,13 +135,15 @@ sp-block-builder = { default-features = false, version = "29.0.0" }
 sp-blockchain = "31.0.0"
 sp-consensus-aura = { default-features = false, version = "0.35.0" }
 sp-core = { default-features = false, version = "31.0.0" }
-sp-externalities = "0.27.0"
+sp-database = { default-features = false, version = "8.0.0" }
+sp-externalities = { default-features = false, version = "0.27.0" }
 sp-genesis-builder = { default-features = false, version = "0.10.0" }
 sp-inherents = { default-features = false, version = "29.0.0" }
 sp-io = { default-features = false, version = "33.0.0" }
 sp-keystore = "0.37.0"
 sp-offchain = { default-features = false, version = "29.0.0" }
 sp-runtime = { default-features = false, version = "34.0.0" }
+sp-runtime-interface = { default-features = false, version = "26.0.0" }
 sp-session = { default-features = false, version = "30.0.0" }
 sp-staking = { default-features = false, version = "29.0.0" }
 sp-state-machine = "0.38.0"

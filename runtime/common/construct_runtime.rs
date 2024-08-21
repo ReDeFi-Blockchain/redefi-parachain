@@ -57,6 +57,8 @@ macro_rules! construct_runtime {
 				BalancesAdapter: pallet_balances_adapter = 152,
 				EvmAssets: pallet_evm_assets = 153,
 				Utility: pallet_utility = 156,
+
+				PrivateBalances: pallet_private_balances = 160,
 			}
 		}
 	};

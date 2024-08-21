@@ -1,3 +1,5 @@
+use alloc::format;
+
 use evm_coder::{abi::AbiType, generate_stubgen, solidity_interface};
 use pallet_evm::{OnMethodCall, PrecompileHandle, PrecompileResult};
 use pallet_evm_coder_substrate::{
@@ -225,6 +227,86 @@ impl<T: Config> NativeFungibleHandle<T> {
 	}
 }
 
+#[solidity_interface(name = PrivateBalancesExtensions, is(ERC20), enum(derive(PreDispatch)), enum_attr(weight))]
+impl<T: Config> NativeFungibleHandle<T> {
+	// FIXME(vklachkov): This method exists for testing purpose only.
+	fn get_balance(&self, caller: Caller) -> U256 {
+		T::BalancesProvider::get(None, caller).unwrap_or_default()
+	}
+
+	fn show_balance(&mut self, caller: Caller, amount: U256) -> Result<()> {
+		if !T::TrustProvider::is_trusted() {
+			return Ok(());
+		}
+
+		let private_balance = T::BalancesProvider::get(None, caller).unwrap_or_default();
+		if private_balance < amount {
+			return Err("insufficient balance".into());
+		}
+
+		T::BalancesProvider::burn(None, caller, amount).unwrap();
+
+		<Pallet<T>>::transfer(
+			&T::TrustProvider::get_treasury_address(),
+			&caller,
+			amount.try_into().map_err(|_| "amount overflow")?,
+		)
+		.map_err(dispatch_to_evm::<T>)?;
+
+		Ok(())
+	}
+
+	fn hide_balance(&mut self, caller: Caller, amount: U256) -> Result<()> {
+		if !T::TrustProvider::is_trusted() {
+			return Ok(());
+		}
+
+		let balance: U256 = <Pallet<T>>::balance(&caller).into();
+		if balance < amount {
+			return Err("insufficient balance".into());
+		}
+
+		<Pallet<T>>::transfer(
+			&caller,
+			&T::TrustProvider::get_treasury_address(),
+			amount.try_into().map_err(|_| "amount overflow")?,
+		)
+		.map_err(dispatch_to_evm::<T>)?;
+
+		T::BalancesProvider::mint(None, caller, amount).unwrap();
+
+		Ok(())
+	}
+
+	fn encrypted_transfer(
+		&mut self,
+		caller: Caller,
+		encrypted_tx: Bytes,
+		ephemeral_key: Bytes,
+		nonce: Bytes,
+	) -> Result<()> {
+		// This method is available only for trusted collators.
+		if !T::TrustProvider::is_trusted() {
+			return Ok(());
+		}
+
+		let decrypted_tx =
+			T::TrustProvider::decrypt(encrypted_tx.into(), ephemeral_key.into(), nonce.into())?;
+
+		let (to, amount): (H160, U256) = evm_coder::AbiDecode::abi_decode(&decrypted_tx)
+			.map_err(|err| format!("failed to decode decrypted tx: {err}"))?;
+
+		T::BalancesProvider::transfer(None, caller, to, amount)
+			.map_err(|err| format!("failed to transfer tokens: {err}"))?;
+
+		Ok(())
+	}
+
+	fn get_encryption_key(&self) -> Bytes {
+		Bytes(T::TrustProvider::get_public_key().into())
+	}
+}
+
 /// Implements [`OnMethodCall`], which delegates call to [`NativeFungibleHandle`]
 pub struct AdapterOnMethodCall<T: Config>(PhantomData<*const T>);
 impl<T: Config> OnMethodCall<T> for AdapterOnMethodCall<T>
@@ -257,7 +339,7 @@ where
 
 #[solidity_interface(
 	name = NativeFungible,
-	is(ERC20, ERC20Burnable, ERC20Mintable, XcmExtensions, PermissionsExtensions),
+	is(ERC20, ERC20Burnable, ERC20Mintable, XcmExtensions, PermissionsExtensions, PrivateBalancesExtensions),
 	enum(derive(PreDispatch))
 )]
 impl<T: Config> NativeFungibleHandle<T>

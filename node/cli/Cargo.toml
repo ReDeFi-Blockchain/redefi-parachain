@@ -65,6 +65,7 @@ sc-telemetry = { workspace = true }
 sc-tracing = { workspace = true }
 sc-transaction-pool = { workspace = true }
 serde = { workspace = true }
+sp-std = { workspace = true }
 sp-api = { workspace = true }
 sp-block-builder = { workspace = true }
 sp-blockchain = { workspace = true }
@@ -97,6 +98,8 @@ pallet-transaction-payment-rpc.workspace = true
 sc-rpc-api.workspace = true
 sc-rpc.workspace = true
 sp-inherents.workspace = true
+
+redefi-private-balances-runtime-ext = { workspace = true, features = ["std"] }
 
 [build-dependencies]
 substrate-build-script-utils = { workspace = true }

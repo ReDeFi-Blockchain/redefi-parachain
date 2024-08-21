@@ -1,0 +1,34 @@
+[package]
+authors = ['ReDeFi Network <support@redefi.world>']
+edition.workspace = true
+homepage = 'https://redefi.world'
+name = 'redefi-private-balances-runtime-ext'
+version.workspace = true
+
+[dependencies]
+sp-core = { workspace = true }
+sp-database = { workspace = true }
+sp-externalities = { workspace = true }
+sp-io = { workspace = true }
+sp-runtime-interface = { workspace = true }
+sp-std = { workspace = true }
+
+parity-scale-codec = { workspace = true }
+
+aes-gcm = { version = "0.10.3", features = ["aes", "alloc"], optional = true }
+kvdb-rocksdb = { version = "0.19.0", optional = true }
+x25519-dalek = { version = "2.0.1", features = ["static_secrets"], optional = true }
+
+[features]
+default = ["std"]
+std = [
+	"sp-core/std",
+	"sp-externalities/std",
+	"sp-io/std",
+	"sp-runtime-interface/std",
+	"sp-std/std",
+	"parity-scale-codec/std",
+	"aes-gcm",
+	"kvdb-rocksdb",
+	"x25519-dalek",
+]

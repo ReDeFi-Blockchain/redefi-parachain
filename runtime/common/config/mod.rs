@@ -16,5 +16,6 @@
 
 pub mod ethereum;
 pub mod parachain;
+pub mod private_balances;
 pub mod substrate;
 pub mod xcm;

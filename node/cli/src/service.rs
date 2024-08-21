@@ -55,6 +55,7 @@ use futures::{
 use jsonrpsee::RpcModule;
 use polkadot_primitives::PersistedValidationData;
 use polkadot_service::CollatorPair;
+use redefi_private_balances_runtime_ext::PrivateBalancesExt;
 use sc_client_api::{
 	backend::StateBackend, AuxStore, Backend, BlockOf, BlockchainEvents, StorageProvider,
 };
@@ -78,15 +79,19 @@ use up_common::types::{opaque::*, Nonce};
 use crate::rpc::{create_eth, create_full, EthDeps, FullDeps};
 
 #[cfg(not(feature = "runtime-benchmarks"))]
-pub type ExtendHostFunctions = cumulus_client_service::storage_proof_size::HostFunctions;
+pub type ExtendHostFunctions = (
+	cumulus_client_service::storage_proof_size::HostFunctions,
+	redefi_private_balances_runtime_ext::HostFunctions,
+);
 
 #[cfg(feature = "runtime-benchmarks")]
 pub type ExtendHostFunctions = (
 	cumulus_client_service::storage_proof_size::HostFunctions,
+	redefi_private_balances_runtime_ext::HostFunctions,
 	frame_benchmarking::benchmarking::HostFunctions,
 );
 
-/// Unique native executor instance.
+/// ReDeFi native executor instance.
 #[cfg(feature = "redefi-runtime")]
 pub struct RedefiRuntimeExecutor;
 
@@ -815,6 +820,11 @@ where
 			warp_sync_params: None,
 			block_relay: None,
 		})?;
+
+	let db_config_dir = config.base_path.config_dir(config.chain_spec.id());
+	client.register_runtime_extension(move || {
+		Box::new(PrivateBalancesExt::new(db_config_dir.clone()).unwrap())
+	});
 
 	let collator = config.role.is_authority();
 
