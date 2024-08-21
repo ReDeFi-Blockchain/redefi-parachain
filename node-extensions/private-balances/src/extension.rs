@@ -8,7 +8,7 @@ use sp_core::{H160, U256};
 use crate::{
 	db::PrivateBalancesDb,
 	keystore::{EcdhKeystore, KeyService, SharedSecret, X25519Key},
-	service::TrustedService,
+	service::OffChainKeyService,
 };
 
 sp_externalities::decl_extension! {
