@@ -88,7 +88,7 @@ pub mod migrations {
 	use super::*;
 
 	/// Unreleased migrations. Add new ones here:
-	pub type Unreleased = (pallet_evm_assets::migration::FixBaxMeta<Runtime>,);
+	pub type Unreleased = (pallet_evm_assets::migration::InitializationWithSudoAsHolder<Runtime>,);
 }
 
 /// Executive: handles dispatch to the various modules.
