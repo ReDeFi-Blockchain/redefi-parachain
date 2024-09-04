@@ -31,6 +31,7 @@ use sp_std::vec::Vec;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use up_common::types::{AccountId, BlockNumber};
+use cumulus_pallet_parachain_system::RelaychainStateProvider;
 
 use crate::{AllPalletsWithSystem, Aura, Balances, Runtime, RuntimeCall, Signature, Treasury};
 
@@ -111,10 +112,9 @@ impl<T: cumulus_pallet_parachain_system::Config> BlockNumberProvider
 	type BlockNumber = BlockNumber;
 
 	fn current_block_number() -> Self::BlockNumber {
-		cumulus_pallet_parachain_system::Pallet::<T>::validation_data()
-			.map(|d| d.relay_parent_number)
-			.unwrap_or_default()
+		cumulus_pallet_parachain_system::RelaychainDataProvider::<T>::current_relay_chain_state().number
 	}
+
 	#[cfg(feature = "runtime-benchmarks")]
 	fn set_block_number(block: Self::BlockNumber) {
 		cumulus_pallet_parachain_system::RelaychainDataProvider::<T>::set_block_number(block)

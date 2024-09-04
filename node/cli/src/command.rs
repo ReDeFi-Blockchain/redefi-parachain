@@ -32,6 +32,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use cumulus_client_service::storage_proof_size;
 use cumulus_primitives_core::ParaId;
 use log::info;
 use sc_cli::{
@@ -43,7 +44,26 @@ use sp_runtime::traits::AccountIdConversion;
 use up_common::types::opaque::RuntimeId;
 
 #[cfg(feature = "redefi-runtime")]
-use crate::service::RedefiRuntimeExecutor;
+type RedefiHostFunctions = (
+	cumulus_client_service::ParachainHostFunctions,
+	storage_proof_size::HostFunctions,
+);
+
+#[cfg(not(feature = "redefi-runtime"))]
+type RedefiHostFunctions = (
+	cumulus_client_service::ParachainHostFunctions,
+);
+
+/// Only enable the benchmarking host functions when we actually want to benchmark.
+#[cfg(feature = "runtime-benchmarks")]
+pub type HostFunctions = (
+	RedefiHostFunctions,
+	frame_benchmarking::benchmarking::HostFunctions,
+);
+/// Otherwise we use empty host functions for ext host functions.
+#[cfg(not(feature = "runtime-benchmarks"))]
+pub type HostFunctions = RedefiHostFunctions;
+
 use crate::{
 	chain_spec::{self, RuntimeIdentification, ServiceId, ServiceIdentification},
 	cli::{Cli, RelayChainCli, Subcommand},
@@ -174,7 +194,7 @@ macro_rules! construct_async_run {
 		match runner.config().chain_spec.runtime_id() {
 			#[cfg(feature = "redefi-runtime")]
 			RuntimeId::Redefi => async_run_with_runtime!(
-				redefi_runtime::Runtime, redefi_runtime::RuntimeApi, RedefiRuntimeExecutor,
+				redefi_runtime::Runtime, redefi_runtime::RuntimeApi, HostFunctions,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
@@ -209,7 +229,7 @@ macro_rules! construct_sync_run {
 		match runner.config().chain_spec.runtime_id() {
 			#[cfg(feature = "redefi-runtime")]
 			RuntimeId::Redefi => sync_run_with_runtime!(
-				redefi_runtime::Runtime, redefi_runtime::RuntimeApi, RedefiRuntimeExecutor,
+				redefi_runtime::Runtime, redefi_runtime::RuntimeApi, HostFunctions,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
@@ -225,7 +245,8 @@ macro_rules! start_node_using_chain_runtime {
 			RuntimeId::Redefi => $start_node_fn::<
 				redefi_runtime::Runtime,
 				redefi_runtime::RuntimeApi,
-				RedefiRuntimeExecutor,
+				HostFunctions,
+				sc_network::NetworkWorker<polkadot_primitives::Block, polkadot_primitives::Hash>,
 			>($config $(, $($args),+)?) $($code)*,
 
 			runtime_id => Err(no_runtime_err!(runtime_id).into()),
@@ -314,7 +335,7 @@ pub fn run() -> Result<()> {
 					let partials = new_partial::<
 						redefi_runtime::Runtime,
 						redefi_runtime::RuntimeApi,
-						RedefiRuntimeExecutor,
+						HostFunctions,
 						_,
 					>(
 						&config,
@@ -326,7 +347,7 @@ pub fn run() -> Result<()> {
 					let partials = new_partial::<
 						redefi_runtime::Runtime,
 						redefi_runtime::RuntimeApi,
-						RedefiRuntimeExecutor,
+						HostFunctions,
 						_,
 					>(
 						&config,
@@ -344,47 +365,6 @@ pub fn run() -> Result<()> {
 					Err("Unsupported benchmarking command".into())
 				}
 			}
-		}
-		#[cfg(feature = "try-runtime")]
-		// embedded try-runtime cli will be removed soon.
-		#[allow(deprecated)]
-		Some(Subcommand::TryRuntime(cmd)) => {
-			use std::{future::Future, pin::Pin};
-
-			use polkadot_cli::Block;
-			use sc_executor::{sp_wasm_interface::ExtendedHostFunctions, NativeExecutionDispatch};
-			use try_runtime_cli::block_building_info::timestamp_with_aura_info;
-
-			let runner = cli.create_runner(cmd)?;
-
-			// grab the task manager.
-			let registry = &runner
-				.config()
-				.prometheus_config
-				.as_ref()
-				.map(|cfg| &cfg.registry);
-			let task_manager =
-				sc_service::TaskManager::new(runner.config().tokio_handle.clone(), *registry)
-					.map_err(|e| format!("Error: {e:?}"))?;
-			let info_provider = Some(timestamp_with_aura_info(12000));
-
-			runner.async_run(|config| -> Result<(Pin<Box<dyn Future<Output = _>>>, _)> {
-				Ok((
-					match config.chain_spec.runtime_id() {
-						#[cfg(feature = "redefi-runtime")]
-						RuntimeId::Redefi => Box::pin(cmd.run::<Block, ExtendedHostFunctions<
-							sp_io::SubstrateHostFunctions,
-							<RedefiRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions,
-						>, _>(info_provider)),
-						runtime_id => return Err(no_runtime_err!(runtime_id).into()),
-					},
-					task_manager,
-				))
-			})
-		}
-		#[cfg(not(feature = "try-runtime"))]
-		Some(Subcommand::TryRuntime) => {
-			Err("Try-runtime must be enabled by `--features try-runtime`.".into())
 		}
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
@@ -407,6 +387,12 @@ pub fn run() -> Result<()> {
 				let is_dev_service = matches![service_id, ServiceId::Dev]
 					|| relay_chain_id == Some("dev-service".into());
 
+				let para_id = extensions
+					.map(|e| e.para_id)
+					.ok_or("Could not find parachain ID in chain-spec.")?;
+
+				let para_id = ParaId::from(para_id);
+
 				if is_dev_service {
 					info!("Running Dev service");
 
@@ -415,13 +401,9 @@ pub fn run() -> Result<()> {
 					config.state_pruning = Some(sc_service::PruningMode::ArchiveAll);
 
 					return start_node_using_chain_runtime! {
-						start_dev_node(config, cli.idle_autoseal_interval, cli.autoseal_finalization_delay, cli.disable_autoseal_on_tx).map_err(Into::into)
+						start_dev_node(config, para_id, cli.idle_autoseal_interval, cli.autoseal_finalization_delay, cli.disable_autoseal_on_tx).map_err(Into::into)
 					};
 				};
-
-				let para_id = extensions
-					.map(|e| e.para_id)
-					.ok_or("Could not find parachain ID in chain-spec.")?;
 
 				let polkadot_cli = RelayChainCli::new(
 					&config,
@@ -429,8 +411,6 @@ pub fn run() -> Result<()> {
 						.iter()
 						.chain(cli.relaychain_args.iter()),
 				);
-
-				let para_id = ParaId::from(para_id);
 
 				let parachain_account =
 					AccountIdConversion::<polkadot_primitives::AccountId>::into_account_truncating(

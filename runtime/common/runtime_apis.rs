@@ -45,9 +45,10 @@ macro_rules! impl_common_runtime_apis {
 		use frame_support::{
 			pallet_prelude::Weight,
 			traits::OnFinalize,
-			genesis_builder_helper::{build_config, create_default_config},
+			genesis_builder_helper::{build_state, get_preset},
 		};
 		use fp_rpc::TransactionStatus;
+		use pallet_aura::Authorities;
 		use pallet_transaction_payment::{
 			FeeDetails, RuntimeDispatchInfo,
 		};
@@ -299,12 +300,16 @@ macro_rules! impl_common_runtime_apis {
 			}
 
 			impl sp_genesis_builder::GenesisBuilder<Block> for Runtime {
-				fn create_default_config() -> Vec<u8> {
-					create_default_config::<RuntimeGenesisConfig>()
+				fn build_state(config: Vec<u8>) -> sp_genesis_builder::Result {
+					build_state::<RuntimeGenesisConfig>(config)
 				}
-
-				fn build_config(config: Vec<u8>) -> sp_genesis_builder::Result {
-					build_config::<RuntimeGenesisConfig>(config)
+		
+				fn get_preset(id: &Option<sp_genesis_builder::PresetId>) -> Option<Vec<u8>> {
+					get_preset::<RuntimeGenesisConfig>(id, |_| None)
+				}
+		
+				fn preset_names() -> Vec<sp_genesis_builder::PresetId> {
+					vec![]
 				}
 			}
 
@@ -322,11 +327,20 @@ macro_rules! impl_common_runtime_apis {
 
 			impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
 				fn slot_duration() -> sp_consensus_aura::SlotDuration {
-					sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
+					sp_consensus_aura::SlotDuration::from_millis(up_common::constants::SLOT_DURATION)
 				}
 
 				fn authorities() -> Vec<AuraId> {
-					Aura::authorities().to_vec()
+					Authorities::<Self>::get().to_vec()
+				}
+			}
+
+			impl cumulus_primitives_aura::AuraUnincludedSegmentApi<Block> for Runtime {
+				fn can_build_upon(
+					included_hash: <Block as BlockT>::Hash,
+					slot: cumulus_primitives_aura::Slot,
+				) -> bool {
+					$crate::config::parachain::ConsensusHook::can_build_upon(included_hash, slot)
 				}
 			}
 
