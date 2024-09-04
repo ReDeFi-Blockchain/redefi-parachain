@@ -2,7 +2,7 @@
 default-members = ['node/*', 'runtime/redefi']
 members = ['node/*', 'pallets/*', 'primitives/*', 'runtime/redefi']
 package.edition = "2021"
-package.version = "1.9.0"
+package.version = "1.14.0"
 resolver = "2"
 
 [profile.release]
