@@ -366,47 +366,6 @@ pub fn run() -> Result<()> {
 				}
 			}
 		}
-		#[cfg(feature = "try-runtime")]
-		// embedded try-runtime cli will be removed soon.
-		#[allow(deprecated)]
-		Some(Subcommand::TryRuntime(cmd)) => {
-			use std::{future::Future, pin::Pin};
-
-			use polkadot_cli::Block;
-			use sc_executor::{sp_wasm_interface::ExtendedHostFunctions, NativeExecutionDispatch};
-			use try_runtime_cli::block_building_info::timestamp_with_aura_info;
-
-			let runner = cli.create_runner(cmd)?;
-
-			// grab the task manager.
-			let registry = &runner
-				.config()
-				.prometheus_config
-				.as_ref()
-				.map(|cfg| &cfg.registry);
-			let task_manager =
-				sc_service::TaskManager::new(runner.config().tokio_handle.clone(), *registry)
-					.map_err(|e| format!("Error: {e:?}"))?;
-			let info_provider = Some(timestamp_with_aura_info(12000));
-
-			runner.async_run(|config| -> Result<(Pin<Box<dyn Future<Output = _>>>, _)> {
-				Ok((
-					match config.chain_spec.runtime_id() {
-						#[cfg(feature = "redefi-runtime")]
-						RuntimeId::Redefi => Box::pin(cmd.run::<Block, ExtendedHostFunctions<
-							sp_io::SubstrateHostFunctions,
-							HostFunctions,
-						>, _>(info_provider)),
-						runtime_id => return Err(no_runtime_err!(runtime_id).into()),
-					},
-					task_manager,
-				))
-			})
-		}
-		#[cfg(not(feature = "try-runtime"))]
-		Some(Subcommand::TryRuntime) => {
-			Err("Try-runtime must be enabled by `--features try-runtime`.".into())
-		}
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			let collator_options = cli.run.collator_options();
